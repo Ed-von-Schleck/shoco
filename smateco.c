@@ -45,7 +45,7 @@ int smateco_compress(const char * const restrict original, char * const restrict
     if (chr_indices[0] == -1)
       goto last_resort;
 
-    for (n_successors = 0; n_successors < 12; ++n_successors) {
+    for (n_successors = 0; n_successors < 10; ++n_successors) {
       current = in[n_successors + 1];
       if (current == '\0')
         break;
@@ -108,9 +108,9 @@ int smateco_compress(const char * const restrict original, char * const restrict
       continue;
     }
     if (n_successors > 0) {
-      if (chr_indices[0] > 7)
+      if (successor_indices[0] > 3)
         goto last_resort;
-      *o++ = 0x80 | chr_indices[0] << 3 | successor_indices[0];
+      *o++ = 0x80 | chr_indices[0] << 2 | successor_indices[0];
       in += 2;
       continue;
     }
@@ -125,30 +125,42 @@ end:
   return o - out - fits;
 }
 
-static int get_3_bits(const char *in, int offset) {
+static inline int get_bits(const char *in, int offset, int bits) {
+  int mask = (1 << bits) - 1;
   if (offset < 0) {
-    int overflow = (offset + 3);
+    int overflow = (offset + bits);
     offset += 8;
-    int mask1 = 0x7 >> overflow;
-    int mask2 = 0x7 ^ mask1;
+    int mask = (1 << bits) - 1;
+    int mask1 = mask >> overflow;
+    int mask2 = mask ^ mask1;
     return ((in[0] << (8 - offset) & mask2) | ((in[1] >> offset) & mask1));
   } else {
-    return (in[0] >> offset) & 0x7;
+    return (in[0] >> offset) & mask;
   }
 }
 
-static int decode (const char *in, char *out, int bit_offset, int byte_offset, int n, int previous_index) {
+static int decode_successors (const char *in, char *out, int bit_offset, int byte_offset, int n, int previous_index, int bits) {
   char *o = out;
   char current_char;
   for (int i = 0; i < n; ++i) {
-    bit_offset -= 3;
-    current_char = successors[previous_index][get_3_bits(in + byte_offset, bit_offset)];
+    bit_offset -= bits;
+    current_char = successors[previous_index][get_bits(in + byte_offset, bit_offset, bits)];
     *o++ = current_char;
     previous_index = chrs_reversed[current_char];
     if (bit_offset < 0) {
       bit_offset += 8;
       ++byte_offset;
     }
+  }
+  return o - out;
+}
+
+static int decode_word(const char *in, char *out, int *bitlist, int offset) {
+  char *o = out;
+  char current_char;
+  int previous_index = get_bits(in, offset, bitlist[0]);
+  *o++ = chrs[previous_index];
+  for (int i = 1; bitlist[i] != 0; ++i) {
   }
   return o - out;
 }
@@ -169,25 +181,24 @@ int smateco_decompress(const char * const restrict original, char * const restri
     } else if (!(*in & 0x40)) {
       if (o + 3 >= out + len)
         goto end;
-      previous_index = get_3_bits(in, 3);
+      previous_index = (in[0] >> 2) & 0x0f;
       *o++ = chrs[previous_index];
-      *o++ = successors[previous_index][in[0] & 0x07];
+      *o++ = successors[previous_index][in[0] & 0x03];
       ++in;
     } else if (!(*in & 0x20)) {
       if (o + 5 >= out + len)
         goto end;
       previous_index = (in[0] >> 1) & 0x0f;
       *o++ = chrs[previous_index];
-      o += decode(in, o, 1, 0, 3, previous_index);
+      o += decode_successors(in, o, 1, 0, 3, previous_index, 3);
       in += 2;
     } else if (!(*in & 0x10)) {
-
       // one 4-bit and five 3-bit chars
       if (o + 7 >= out + len)
         goto end;
       previous_index = ((in[0] & 0x07) << 1) | ((in[1] >> 7) & 0x1);
       *o++ = chrs[previous_index];
-      o += decode(in, o, 7, 1, 5, previous_index);
+      o += decode_successors(in, o, 7, 1, 5, previous_index, 3);
       in += 3;
     } else if (!(*in & 0x08)) {
       // one 4-bit and ten 3-bit chars
@@ -195,7 +206,7 @@ int smateco_decompress(const char * const restrict original, char * const restri
         goto end;
       previous_index = ((in[0] & 0x07) << 1) | ((in[1] >> 7) & 0x1);
       *o++ = chrs[previous_index];
-      o += decode(in, o, 7, 1, 10, previous_index);
+      o += decode_successors(in, o, 7, 1, 10, previous_index, 3);
       in += 5;
     } else {
       // non-ascii character
