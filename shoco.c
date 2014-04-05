@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "smateco.h"
-#define _SMATECO_INTERNAL
+#include "shoco.h"
+#define _SHOCO_INTERNAL
 #include "successor_table.h"
 
 #if defined(_MSC_VER)
@@ -53,7 +53,7 @@ static int check_successors(int * restrict successor_indices, int pack_n) {
   return 1;
 }
 
-int smateco_compress(const char * const restrict original, char * const restrict out, int len) {
+int shoco_compress(const char * const restrict original, char * const restrict out, int len) {
   int fits = 0;
   char *o = out;
   const char *in = original;
@@ -132,7 +132,7 @@ end:
   return o - out - fits;
 }
 
-int smateco_decompress(const char * const restrict original, char * const restrict out, int len) {
+int shoco_decompress(const char * const restrict original, char * const restrict out, int len) {
   int fits = 0;
   char *o = out;
   const char *in = original;

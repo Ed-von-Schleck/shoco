@@ -2,7 +2,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "smateco.h"
+#include "shoco.h"
 
 #define BUFFER_SIZE 1024
 
@@ -30,8 +30,8 @@ int main() {
   while (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
     *strchr(buffer, '\n') = '\0';
     inlen = strlen(buffer);
-    complen = smateco_compress(buffer, comp, BUFFER_SIZE);
-    smateco_decompress(comp, out, BUFFER_SIZE);
+    complen = shoco_compress(buffer, comp, BUFFER_SIZE);
+    shoco_decompress(comp, out, BUFFER_SIZE);
     rat = ratio(inlen, complen);
     if (complen != 0) {
       ++count;
