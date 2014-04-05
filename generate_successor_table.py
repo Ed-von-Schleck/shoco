@@ -1,4 +1,6 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
+
+from __future__ import print_function
 
 import fileinput
 import collections
@@ -11,21 +13,26 @@ anywhere. It is internal to 'shoco.c'. Include 'shoco.h'
 if you want to use shoco in your project.
 */
 
-static const char chrs[16] = {{
-    {}
+static const char chrs[{chrs_count}] = {{
+    {chrs}
 }};
 
-static const char successors[16][8] = {{
-    {}
+static const char successors[{chrs_count}][{successors_count}] = {{
+    {successors}
 }};
 
-static const signed char chrs_reversed[128] = {{
-    {}
+static const signed char chrs_reversed[256] = {{
+    {chrs_reversed}
 }};
 
-static const signed char successors_reversed[16][16] = {{
-    {}
+static const signed char successors_reversed[{chrs_count}][{chrs_count}] = {{
+    {successors_reversed}
 }};
+
+static const char bigrams[{bigrams_count}][2] = {{
+    {bigrams}
+}};
+
 #endif
 """
 
@@ -39,73 +46,102 @@ def bigrams(sequence):
 
 
 def format_int_line(items):
-    return", ".join(["{}".format(k) for k in items])
+    return ", ".join(["{}".format(k) for k in items])
+
+
+def escape(char):
+    return r"\'" if char == "'" else char
 
 
 def format_chr_line(items):
-    return", ".join(["'{}'".format(k) for k in items])
+    return ", ".join(["'{}'".format(escape(k)) for k in items])
 
 
-def main():
-    successors = collections.OrderedDict()
-    bigram_counter = collections.Counter()
+def format_bg_line(items):
+    return ",\n    ".join(["{{'{}', '{}'}}".format(escape(a), escape(b)) for a, b in items])
 
-    for line in fileinput.input():
-        for bg in bigrams(line.strip()):
-            bigram_counter[bg] += 1
 
-    for bg, count in bigram_counter.most_common():
+def get_most_common(counter, max_):
+    most_common = collections.OrderedDict()
+    for bg, count in counter.most_common():
         a, b = bg
-        try:
-            if ord(a) & 0x80:
-                continue
-        except TypeError:
-            continue
-        successors[a] = []
-        if len(successors) >= 16:
-            break
+        most_common[a] = []
+        if len(most_common) >= max_:
+            return most_common
 
-    for bg, count in bigram_counter.most_common():
+def fill_successors(counter, successors, max_):
+    for bg, count in counter.most_common():
         a, b = bg
-        try:
-            if ord(a) & 0x80:
-                continue
-        except TypeError:
-            continue
 
         if a not in successors:
             continue
-
-        elif len(successors[a]) < 8:
+        elif successors[a] is None:
+            if b in successors:
+                successors[a] = [b]
+        elif len(successors[a]) < max_:
             if b in successors:
                 successors[a].append(b)
 
-        if len(successors) == 16:
-            if sum(map(len, successors.values())) == 128:  # 8 * 16
-                break
+        if sum(map(len, successors.values())) == len(successors) * max_:
+            break
+
+    if sum(map(len, successors.values())) < len(successors) * max_:
+        import sys
+        print("ERROR: Not enough successors found to fill the table.\n", file=sys.stderr)
+        sys.exit(1)
+
+
+def main():
+    chars_count = 32
+    bigrams_count = 64
+    successors_count = 8
+
+    bigram_counter = collections.Counter()
+    bibigram_counter = collections.Counter()
+
+    for line in fileinput.input():
+        bgs = list(bigrams(line.strip()))
+        for bg in bgs:
+            bigram_counter[bg] += 1
+
+        bbgs = list(bigrams(bgs))
+        for bbg in bbgs:
+            bibigram_counter[bbg] += 1
+
+    # generate list of most common chars
+    successors = get_most_common(bigram_counter, chars_count)
+    bi_successors = get_most_common(bibigram_counter, bigrams_count)
+
+
+    fill_successors(bigram_counter, successors, successors_count)
+    #fill_successors(bibigram_counter, bi_successors, 1)
 
     chrs_formated = format_chr_line(successors.keys())
-    successors_formated = ",\n    ".join(format_chr_line(l) for l in successors.values())
-    chrs_indices = collections.OrderedDict(zip(successors.keys(), range(16)))
+    bigrams_formated = format_bg_line(bi_successors.keys())
 
-    chrs_reversed = [chrs_indices.get(chr(i), -1) for i in range(128)]
+    successors_formated = ",\n    ".join(format_chr_line(l) for l in successors.values())
+    chrs_indices = collections.OrderedDict(zip(successors.keys(), range(chars_count)))
+
+    chrs_reversed = [chrs_indices.get(chr(i), -1) for i in range(256)]
     chrs_reversed_formated = format_int_line(chrs_reversed)
     successors_reversed = collections.OrderedDict()
     for char, successor_list in successors.items():
-        successors_reversed[char] = [None] * 16
-        s_indices = collections.OrderedDict(zip(successor_list, range(16)))
+        successors_reversed[char] = [None] * chars_count
+        s_indices = collections.OrderedDict(zip(successor_list, range(chars_count)))
         for i, s in enumerate(successors.keys()):
             successors_reversed[char][i] = s_indices.get(s, -1)
 
-
-
-    #print successors_reversed
     successors_reversed_formated = ",\n    ".join(format_int_line(l) for l in successors_reversed.values())
-    #print successors_reversed_formated
-    print TABLE_C.format(chrs_formated,
-                         successors_formated,
-                         chrs_reversed_formated,
-                         successors_reversed_formated)
+
+    print(TABLE_C.format(
+        chrs_count=chars_count,
+        bigrams_count=bigrams_count,
+        successors_count=successors_count,
+        chrs=chrs_formated,
+        successors=successors_formated,
+        chrs_reversed=chrs_reversed_formated,
+        successors_reversed=successors_reversed_formated,
+        bigrams=bigrams_formated))
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,5 @@
 CC=gcc
-FLAGS=$(CFLAGS) -std=c11 -O3
+FLAGS=$(CFLAGS) -std=c99 -O3
 SOURCES=shoco.c test_input.c
 HEADERS=shoco.h
 EXECUTABLE=test_input

@@ -20,8 +20,8 @@
 #define unlikely(x)     __builtin_expect((x),0)
 #endif
 
-#define PACK_COUNT 2
 #define MAX_SUCCESSOR_N 12
+#define SUCCESSOR_COUNT(x) (sizeof(x) / sizeof(int))
 
 typedef struct Pack {
   unsigned int bytes_packed;
@@ -35,10 +35,13 @@ typedef struct Pack {
 
 static const int successors_1[] = { 2 };
 static const int successors_2[] = { 3, 3, 3 };
+static const int successors_3[] = { 3, 3, 3, 3, 3, 3, 2, 2, 2 };
 
+#define PACK_COUNT 3
 static const Pack packs[PACK_COUNT] = {
-  { 1, 2, 0x02, 2, 4, 1, successors_1 },
-  { 2, 4, 0x06, 3, 4, 3, successors_2 },
+  { 1, SUCCESSOR_COUNT(successors_1) + 1, 0x02, 2, 4, SUCCESSOR_COUNT(successors_1), successors_1 },
+  { 2, SUCCESSOR_COUNT(successors_2) + 1, 0x06, 3, 4, SUCCESSOR_COUNT(successors_2), successors_2 },
+  { 4, SUCCESSOR_COUNT(successors_3) + 1, 0x0e, 4, 4, SUCCESSOR_COUNT(successors_3), successors_3 },
 };
 
 static int successor_index(char chr, int chr_index) {
@@ -69,13 +72,6 @@ int shoco_compress(const char * const restrict original, char * const restrict o
     if (unlikely(o + 1 >= out + len))
       goto end;
 
-    // check for non-ascii character
-    if (unlikely(in[0] & 0x80)) {
-      *o++ = 0xf8;
-      *o++ = *in++;
-      continue;
-    }
-
     // find the longest string of known successors
     lead_chr_index = chrs_reversed[in[0]];
     last_chr_index = lead_chr_index;
@@ -96,10 +92,13 @@ int shoco_compress(const char * const restrict original, char * const restrict o
 
     int success = 0;
     for (int p = PACK_COUNT - 1; p >= 0; --p) {
-      if ((n_successors >= packs[p].n_successors) && (check_successors(successor_indices, p))) {
+      if ((n_successors >= packs[p].n_successors)
+          && (lead_chr_index < 1 << packs[p].lead_bits)
+          && (check_successors(successor_indices, p))) {
         if (o + packs[p].bytes_packed >= out + len)
           goto end;
 
+        word = 0;
         offset = sizeof(word) * 8 - packs[p].header_bits;
         word = packs[p].header << offset;
         offset -= packs[p].lead_bits;
@@ -121,7 +120,17 @@ int shoco_compress(const char * const restrict original, char * const restrict o
 
     if (!success) {
 last_resort:
-      *o++ = *in++;
+      if (unlikely(*in & 0x80)) {
+        if (unlikely(o + 2 >= out + len))
+          goto end;
+        // non-ascii case
+        *o++ = 0xff;
+        *o++ = *in++;
+        continue;
+      } else {
+        // ascii
+        *o++ = *in++;
+      }
     }
   }
 
@@ -138,50 +147,54 @@ int shoco_decompress(const char * const restrict original, char * const restrict
   const char *in = original;
   char current_char;
   int previous_index;
+  unsigned int word = 0;
+  int offset;
+  int mask;
 
   while (*in != '\0') {
     if (!(*in & 0x80)) {
       if (o + 1 >= out + len)
         goto end;
       *o++ = *in++;
-    } else if (!(*in & 0x40)) {
-      if (o + 3 >= out + len)
-        goto end;
-      previous_index = (in[0] >> 2) & 0x0f;
-      *o++ = chrs[previous_index];
-      *o++ = successors[previous_index][in[0] & 0x03];
-      ++in;
-    } else if (!(*in & 0x20)) {
-      int p = 1;
-      if (o + 6 >= out + len)
-        goto end;
-
-      uint16_t *tmp = (uint16_t *) in;
-      *tmp = bswap_16(*tmp);
-
-      int offset = sizeof(*tmp) * 8 - packs[p].header_bits - packs[p].lead_bits;
-      int mask = (1 << packs[p].lead_bits) - 1;
-
-      previous_index = (*tmp >> offset) & mask;
-      *o = chrs[previous_index];
-
-      for (int i = 0; i < packs[p].n_successors != 0; ++i) {
-        offset -= packs[p].successors_bits[i];
-        mask = (1 << packs[p].successors_bits[i]) - 1;
-        current_char = successors[previous_index][(*tmp >> offset) & mask];
-        o[i + 1] = current_char;
-        previous_index = chrs_reversed[current_char];
-      }
-      o += packs[p].bytes_unpacked;
-      in += packs[p].bytes_packed;
-    } else if (!(*in & 0x10)) {
-    } else {
-      // non-ascii character
-      if (o + 1 >= out + len)
-        goto end;
-      ++in;
-      *o++ = *in++;
+      continue;
     }
+    int success = 0;
+    for (int p = 0; p < PACK_COUNT; ++p) {
+      if (((*in >> (8 - packs[p].header_bits)) & ((1 << packs[p].header_bits) - 1)) == packs[p].header) {
+        if (o + packs[p].bytes_unpacked >= out + len)
+          goto end;
+
+        word = 0;
+        memcpy(&word, in, sizeof(packs[p].bytes_packed));
+        word = bswap_32(word);
+
+        int offset = sizeof(word) * 8 - packs[p].header_bits - packs[p].lead_bits;
+        int mask = (1 << packs[p].lead_bits) - 1;
+
+        previous_index = (word >> offset) & mask;
+        *o = chrs[previous_index];
+
+        for (int i = 0; i < packs[p].n_successors != 0; ++i) {
+          offset -= packs[p].successors_bits[i];
+          mask = (1 << packs[p].successors_bits[i]) - 1;
+          current_char = successors[previous_index][(word >> offset) & mask];
+          o[i + 1] = current_char;
+          previous_index = chrs_reversed[current_char];
+        }
+        o += packs[p].bytes_unpacked;
+        in += packs[p].bytes_packed;
+        success = 1;
+        break;
+      }
+    }
+    if (success)
+      continue;
+
+    // non-ascii character
+    if (o + 1 >= out + len)
+      goto end;
+    ++in;
+    *o++ = *in++;
   }
 
   fits = 1;
