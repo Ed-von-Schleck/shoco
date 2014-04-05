@@ -1,5 +1,10 @@
 #include <string.h>
+#include <stdio.h>
 #include <stdint.h>
+
+#include "smateco.h"
+#define _SMATECO_INTERNAL
+#include "successor_table.h"
 
 #if defined(_MSC_VER)
   #include <stdlib.h>
@@ -10,112 +15,114 @@
   #include <byteswap.h>
 #endif
 
-extern const char chrs[16];
-extern const char successors[16][8];
-extern const int chrs_reversed[128];
+#ifdef __GNUC__
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
+#endif
 
-static int successor_index(char chr, int chr_index) __attribute__ ((const));
+#define PACK_COUNT 2
+#define MAX_SUCCESSOR_N 12
+
+typedef struct Pack {
+  unsigned int bytes_packed;
+  unsigned int bytes_unpacked;
+  unsigned int header;
+  unsigned int header_bits;
+  unsigned int lead_bits;
+  unsigned const int n_successors;
+  unsigned const int *successors_bits;
+} Pack;
+
+static const int successors_1[] = { 2 };
+static const int successors_2[] = { 3, 3, 3 };
+
+static const Pack packs[PACK_COUNT] = {
+  { 1, 2, 0x02, 2, 4, 1, successors_1 },
+  { 2, 4, 0x06, 3, 4, 3, successors_2 },
+};
+
 static int successor_index(char chr, int chr_index) {
-  char *chr_ptr = memchr(successors[chr_index], chr, 8);
-  return chr_ptr != NULL ? chr_ptr - successors[chr_index] : -1;
+  int i = chrs_reversed[chr];
+  return ((chr_index >= 0) && (i >= 0)) ? successors_reversed[chr_index][i] : -1;
+}
+
+static int check_successors(int * restrict successor_indices, int pack_n) {
+  for (int i = 0; i < packs[pack_n].n_successors; ++i)
+    if (successor_indices[i] >= 1 << packs[pack_n].successors_bits[i])
+      return 0;
+  return 1;
 }
 
 int smateco_compress(const char * const restrict original, char * const restrict out, int len) {
   int fits = 0;
   char *o = out;
   const char *in = original;
-  int chr_indices[13];
   int successor_indices[13];
+  int lead_chr_index;
+  int last_chr_index;
   char current;
-  int n_successors;
+  int n_successors = 0;
+  unsigned int word = 0;
+  int offset;
 
   while (in[0] != '\0') {
-    if (o + 1 >= out + len)
+    if (unlikely(o + 1 >= out + len))
       goto end;
 
     // check for non-ascii character
-    if (in[0] & 0x80) {
+    if (unlikely(in[0] & 0x80)) {
       *o++ = 0xf8;
       *o++ = *in++;
       continue;
     }
 
     // find the longest string of known successors
-    chr_indices[0] = chrs_reversed[in[0]];
-    if (chr_indices[0] == -1)
+    lead_chr_index = chrs_reversed[in[0]];
+    last_chr_index = lead_chr_index;
+    if (lead_chr_index == -1)
       goto last_resort;
 
-    for (n_successors = 0; n_successors < 10; ++n_successors) {
+    for (n_successors = 0; n_successors < MAX_SUCCESSOR_N; ++n_successors) {
       current = in[n_successors + 1];
       if (current == '\0')
         break;
 
-      successor_indices[n_successors] = successor_index(current, chr_indices[n_successors]);
+      successor_indices[n_successors] = successor_index(current, last_chr_index);
       if (successor_indices[n_successors] == -1)
         break;
 
-      chr_indices[n_successors + 1] = chrs_reversed[current];
+      last_chr_index = chrs_reversed[current];
     }
-    if (n_successors > 9) {
-      if (o + 6 >= out + len)
-        goto end;
-      uint32_t *tmp = (uint32_t *) o;
-      *tmp = 0xf0000000
-        | chr_indices[0] << 23
-        | successor_indices[0] << 20
-        | successor_indices[1] << 17
-        | successor_indices[2] << 14
-        | successor_indices[3] << 11
-        | successor_indices[4] << 8
-        | successor_indices[5] << 5
-        | successor_indices[6] << 2
-        | successor_indices[7] >> 1;
 
-      *tmp = bswap_32(*tmp);
-      o += 4;
-      *o++ = successor_indices[7] << 7 | successor_indices[8] << 4 | successor_indices[9] << 1;
-      in += 11;
-      continue;
+    int success = 0;
+    for (int p = PACK_COUNT - 1; p >= 0; --p) {
+      if ((n_successors >= packs[p].n_successors) && (check_successors(successor_indices, p))) {
+        if (o + packs[p].bytes_packed >= out + len)
+          goto end;
+
+        offset = sizeof(word) * 8 - packs[p].header_bits;
+        word = packs[p].header << offset;
+        offset -= packs[p].lead_bits;
+        word |= lead_chr_index << offset;
+
+        for (int i = 0; i < packs[p].n_successors != 0; ++i) {
+          offset -= packs[p].successors_bits[i];
+          word |= successor_indices[i] << offset;
+        }
+        word = bswap_32(word);
+        memcpy(o, &word, packs[p].bytes_packed);
+
+        o += packs[p].bytes_packed;
+        in += packs[p].bytes_unpacked;
+        success = 1;
+        break;
+      }
     }
-    if (n_successors > 4) {
-      if (o + 4 >= out + len)
-        goto end;
-      uint32_t *tmp = (uint32_t *) o;
-      *tmp = 0xe0000000
-        | chr_indices[0] << 23
-        | successor_indices[0] << 20
-        | successor_indices[1] << 17
-        | successor_indices[2] << 14
-        | successor_indices[3] << 11
-        | successor_indices[4] << 8;
-      *tmp = bswap_32(*tmp);
-      o += 3;
-      in += 6;
-      continue;
-    }
-    if (n_successors > 2) {
-      if (o + 3 >= out + len)
-        goto end;
-      uint16_t *tmp = (uint16_t *) o;
-      *tmp = 0xc000
-        | chr_indices[0] << 9
-        | successor_indices[0] << 6
-        | successor_indices[1] << 3
-        | successor_indices[2];
-      *tmp = bswap_16(*tmp);
-      o += 2;
-      in += 4;
-      continue;
-    }
-    if (n_successors > 0) {
-      if (successor_indices[0] > 3)
-        goto last_resort;
-      *o++ = 0x80 | chr_indices[0] << 2 | successor_indices[0];
-      in += 2;
-      continue;
-    }
+
+    if (!success) {
 last_resort:
-    *o++ = *in++;
+      *o++ = *in++;
+    }
   }
 
   fits = 1;
@@ -124,47 +131,6 @@ end:
   *o++ = '\0';
   return o - out - fits;
 }
-
-static inline int get_bits(const char *in, int offset, int bits) {
-  int mask = (1 << bits) - 1;
-  if (offset < 0) {
-    int overflow = (offset + bits);
-    offset += 8;
-    int mask = (1 << bits) - 1;
-    int mask1 = mask >> overflow;
-    int mask2 = mask ^ mask1;
-    return ((in[0] << (8 - offset) & mask2) | ((in[1] >> offset) & mask1));
-  } else {
-    return (in[0] >> offset) & mask;
-  }
-}
-
-static int decode_successors (const char *in, char *out, int bit_offset, int byte_offset, int n, int previous_index, int bits) {
-  char *o = out;
-  char current_char;
-  for (int i = 0; i < n; ++i) {
-    bit_offset -= bits;
-    current_char = successors[previous_index][get_bits(in + byte_offset, bit_offset, bits)];
-    *o++ = current_char;
-    previous_index = chrs_reversed[current_char];
-    if (bit_offset < 0) {
-      bit_offset += 8;
-      ++byte_offset;
-    }
-  }
-  return o - out;
-}
-
-static int decode_word(const char *in, char *out, int *bitlist, int offset) {
-  char *o = out;
-  char current_char;
-  int previous_index = get_bits(in, offset, bitlist[0]);
-  *o++ = chrs[previous_index];
-  for (int i = 1; bitlist[i] != 0; ++i) {
-  }
-  return o - out;
-}
-
 
 int smateco_decompress(const char * const restrict original, char * const restrict out, int len) {
   int fits = 0;
@@ -186,28 +152,29 @@ int smateco_decompress(const char * const restrict original, char * const restri
       *o++ = successors[previous_index][in[0] & 0x03];
       ++in;
     } else if (!(*in & 0x20)) {
-      if (o + 5 >= out + len)
+      int p = 1;
+      if (o + 6 >= out + len)
         goto end;
-      previous_index = (in[0] >> 1) & 0x0f;
-      *o++ = chrs[previous_index];
-      o += decode_successors(in, o, 1, 0, 3, previous_index, 3);
-      in += 2;
+
+      uint16_t *tmp = (uint16_t *) in;
+      *tmp = bswap_16(*tmp);
+
+      int offset = sizeof(*tmp) * 8 - packs[p].header_bits - packs[p].lead_bits;
+      int mask = (1 << packs[p].lead_bits) - 1;
+
+      previous_index = (*tmp >> offset) & mask;
+      *o = chrs[previous_index];
+
+      for (int i = 0; i < packs[p].n_successors != 0; ++i) {
+        offset -= packs[p].successors_bits[i];
+        mask = (1 << packs[p].successors_bits[i]) - 1;
+        current_char = successors[previous_index][(*tmp >> offset) & mask];
+        o[i + 1] = current_char;
+        previous_index = chrs_reversed[current_char];
+      }
+      o += packs[p].bytes_unpacked;
+      in += packs[p].bytes_packed;
     } else if (!(*in & 0x10)) {
-      // one 4-bit and five 3-bit chars
-      if (o + 7 >= out + len)
-        goto end;
-      previous_index = ((in[0] & 0x07) << 1) | ((in[1] >> 7) & 0x1);
-      *o++ = chrs[previous_index];
-      o += decode_successors(in, o, 7, 1, 5, previous_index, 3);
-      in += 3;
-    } else if (!(*in & 0x08)) {
-      // one 4-bit and ten 3-bit chars
-      if (o + 12 >= out + len)
-        goto end;
-      previous_index = ((in[0] & 0x07) << 1) | ((in[1] >> 7) & 0x1);
-      *o++ = chrs[previous_index];
-      o += decode_successors(in, o, 7, 1, 10, previous_index, 3);
-      in += 5;
     } else {
       // non-ascii character
       if (o + 1 >= out + len)
