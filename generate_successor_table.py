@@ -1,9 +1,14 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 from __future__ import print_function
 
 import fileinput
 import collections
+import argparse
+import itertools
+import re
+import string
+import sys
 
 TABLE_C = """#ifdef _SHOCO_INTERNAL
 /*
@@ -13,28 +18,112 @@ anywhere. It is internal to 'shoco.c'. Include 'shoco.h'
 if you want to use shoco in your project.
 */
 
+#ifdef _MSC_VER
+  #define ALIGNED __declspec(align(16))
+#else
+#if defined(__GNUC__)
+  #define ALIGNED __attribute__ ((aligned(16)))
+#else
+  #define ALIGNED
+#endif
+#endif
+
 static const char chrs[{chrs_count}] = {{
-    {chrs}
+  {chrs}
 }};
 
 static const char successors[{chrs_count}][{successors_count}] = {{
-    {successors}
+  {{{successors}}}
 }};
 
-static const signed char chrs_reversed[256] = {{
-    {chrs_reversed}
+static const int chrs_reversed[256] = {{
+  {chrs_reversed}
 }};
 
-static const signed char successors_reversed[{chrs_count}][{chrs_count}] = {{
-    {successors_reversed}
+static const int successors_reversed[{chrs_count}][{chrs_count}] = {{
+  {{{successors_reversed}}}
 }};
 
-static const char bigrams[{bigrams_count}][2] = {{
-    {bigrams}
+
+typedef struct ALIGNED Pack {{
+  unsigned int bytes_packed;
+  unsigned int bytes_unpacked;
+  unsigned int header_bits;
+  unsigned int lead_bits;
+  unsigned int n_successors;
+  unsigned const int successors_bits[{max_successor_len}];
+  unsigned const int offsets[{offsets_len}];
+}} Pack;
+
+#define PACK_COUNT {pack_count}
+#define MAX_SUCCESSOR_N {max_successor_len}
+
+static const Pack packs[PACK_COUNT] = {{
+  {pack_lines}
 }};
 
 #endif
 """
+
+PACK_STRUCTURES = [
+    (1, (
+        (4, 2),
+        (3, 3),
+        (4, 1, 1),
+        (3, 2, 1),
+        (2, 2, 2),
+        (3, 1, 1, 1),
+        (2, 2, 1, 1),
+        (2, 1, 1, 1, 1),
+        (1, 1, 1, 1, 1, 1),
+    )),
+    (2, (
+        (5, 4, 2, 2),
+        (5, 3, 3, 2),
+        (4, 4, 3, 2),
+        (4, 3, 3, 3),
+        (5, 3, 2, 2, 1),
+        (5, 2, 2, 2, 2),
+        (4, 4, 2, 2, 1),
+        (4, 3, 2, 2, 2),
+        (4, 3, 3, 2, 1),
+        (4, 2, 2, 2, 2),
+        (3, 3, 3, 2, 2),
+        (4, 3, 2, 2, 1, 1),
+        (4, 2, 2, 2, 2, 1),
+        (3, 3, 2, 2, 2, 1),
+        (3, 2, 2, 2, 2, 2),
+        (2, 2, 2, 2, 2, 2),
+        (3, 3, 2, 2, 1, 1, 1),
+        (3, 2, 2, 2, 2, 1, 1),
+        (2, 2, 2, 2, 2, 2, 1),
+        (2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+        (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+    )),
+    (4, (
+        (5, 4, 4, 4, 3, 3, 3, 2),
+        (5, 5, 4, 4, 3, 3, 2, 2),
+        (4, 4, 4, 4, 4, 3, 3, 2),
+        (4, 4, 4, 4, 3, 3, 3, 3),
+        (5, 4, 3, 3, 3, 3, 3, 2, 2),
+        (5, 3, 3, 3, 3, 3, 3, 3, 2),
+        (4, 4, 3, 3, 3, 3, 3, 3, 2),
+        (4, 3, 3, 3, 3, 3, 3, 3, 3),
+        (4, 3, 3, 3, 3, 3, 3, 2, 2, 2),
+        (3, 3, 3, 3, 3, 3, 3, 3, 2, 2),
+        (3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
+        (3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
+        (3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1),
+        (2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
+    ))
+]
+
+def make_log(output):
+    if output is None:
+        def _(*args, **kwargs):
+            pass
+        return _
+    return print
 
 
 def bigrams(sequence):
@@ -46,20 +135,19 @@ def bigrams(sequence):
 
 
 def format_int_line(items):
-    return ", ".join(["{}".format(k) for k in items])
+    return r", ".join([r"{}".format(k) for k in items])
 
 
 def escape(char):
-    return r"\'" if char == "'" else char
+    return r"'\''" if char == "'" else repr(char)
 
 
 def format_chr_line(items):
-    return ", ".join(["'{}'".format(escape(k)) for k in items])
+    return r", ".join([r"{}".format(escape(k)) for k in items])
 
 
-def format_bg_line(items):
-    return ",\n    ".join(["{{'{}', '{}'}}".format(escape(a), escape(b)) for a, b in items])
-
+def format_pack_line(*args):
+  return "{{ {}, {}, {}, {}, {}, {{ {} }}, {{ {} }} }}".format(*args)
 
 def get_most_common(counter, max_):
     most_common = collections.OrderedDict()
@@ -68,6 +156,8 @@ def get_most_common(counter, max_):
         most_common[a] = []
         if len(most_common) >= max_:
             return most_common
+    sys.stderr.write("ERROR: Too little training data. Aborting ...\n")
+    sys.exit(1)
 
 def fill_successors(counter, successors, max_):
     for bg, count in counter.most_common():
@@ -85,63 +175,182 @@ def fill_successors(counter, successors, max_):
         if sum(map(len, successors.values())) == len(successors) * max_:
             break
 
-    if sum(map(len, successors.values())) < len(successors) * max_:
-        import sys
-        print("ERROR: Not enough successors found to fill the table.\n", file=sys.stderr)
-        sys.exit(1)
+    for key, vals in successors.items():
+        vals += ["\255"] * (max_ - len(vals))
+
+
+def chunkinator(files, split, strip):
+    if files:
+        all_in = (open(filename, "rb").read() for filename in files)
+    else:
+        all_in = [sys.stdin.read()]
+
+    split = split.lower()
+    if split is "none":
+        chunks = all_in
+    elif split == "newline":
+        chunks = itertools.chain.from_iterable(data.splitlines() for data in all_in)
+    elif split == "whitespace":
+        chunks = itertools.chain.from_iterable(re.split(b"[ \t\n\r\x0b\x0c]", data) for data in all_in)
+
+    strip = strip.lower()
+    for chunk in chunks:
+        if strip == "whitespace":
+            chunk = chunk.strip()
+        elif strip == "punctuation":
+            chunk = chunk.strip(" !\"#$%&()*+,./:;<=>?@[\\]^_{|}~")
+
+        if chunk:
+            yield chunk
+
+
+def accumulate(seq, start=0):
+    total = start
+    for elem in seq:
+        total += elem
+        yield total
 
 
 def main():
-    chars_count = 32
-    bigrams_count = 64
-    successors_count = 8
+    parser = argparse.ArgumentParser(description="Generate a succession table for 'shoco'.")
+    parser.add_argument("file", nargs="*", help="The training data file(s). If no input file is specified, the input is read from STDIN.")
+    parser.add_argument("-o", "--output", type=str, help="The resulting succession table.")
+    parser.add_argument("--split", choices=["newline", "whitespace", "none"], default="newline", help=r"Split the input into chunks at this separator. Default: newline")
+    parser.add_argument("--strip", choices=["whitespace", "punctuation", "none"], default="whitespace", help="Remove leading and trailing characters from each chunk. Default: whitespace")
 
+    generation_group = parser.add_argument_group("table and encoding generation arguments", "Higher values may provide for better compression ratios, but will make compression/decompression slower. Likewise, lower numbers make compression/decompression faster, but will likely make hurt the compression ratio. The default values are mostly a good compromise.")
+    generation_group.add_argument("--max-leading-char-bits", type=int, default=5, help="The maximum amount of bits that may be used for representing a leading character. Default: 5")
+    generation_group.add_argument("--max-successor-bits", type=int, default=4, help="The maximum amount of bits that may be used for representing a successor character. Default: 4")
+    generation_group.add_argument("--encoding-types", type=int, default=3, choices=[1, 2, 3], help="The number of different encoding schemes. If your input strings are very short, consider lower values. Default: 3")
+    generation_group.add_argument("--optimize-encoding", action="store_true", default=False, help="Find the optimal packing structure for the training data. This rarely leads to different results than the default values, and it is *slow*. Use it for very unusual input strings, or when you use non-default table generation arguments.")
+    args = parser.parse_args()
+
+    log = make_log(args.output)
+
+    chars_count = 1 << args.max_leading_char_bits
+    successors_count = 1 << args.max_successor_bits
+
+
+    log("finding bigrams ... ", end="")
+    sys.stdout.flush()
     bigram_counter = collections.Counter()
-    bibigram_counter = collections.Counter()
-
-    for line in fileinput.input():
-        bgs = list(bigrams(line.strip()))
+    for chunk in chunkinator(args.file, args.split, args.strip):
+        bgs = list(bigrams(chunk))
         for bg in bgs:
             bigram_counter[bg] += 1
 
-        bbgs = list(bigrams(bgs))
-        for bbg in bbgs:
-            bibigram_counter[bbg] += 1
 
+    log("done.")
     # generate list of most common chars
     successors = get_most_common(bigram_counter, chars_count)
-    bi_successors = get_most_common(bibigram_counter, bigrams_count)
-
 
     fill_successors(bigram_counter, successors, successors_count)
-    #fill_successors(bibigram_counter, bi_successors, 1)
 
-    chrs_formated = format_chr_line(successors.keys())
-    bigrams_formated = format_bg_line(bi_successors.keys())
-
-    successors_formated = ",\n    ".join(format_chr_line(l) for l in successors.values())
     chrs_indices = collections.OrderedDict(zip(successors.keys(), range(chars_count)))
-
     chrs_reversed = [chrs_indices.get(chr(i), -1) for i in range(256)]
-    chrs_reversed_formated = format_int_line(chrs_reversed)
     successors_reversed = collections.OrderedDict()
+
     for char, successor_list in successors.items():
         successors_reversed[char] = [None] * chars_count
         s_indices = collections.OrderedDict(zip(successor_list, range(chars_count)))
         for i, s in enumerate(successors.keys()):
             successors_reversed[char][i] = s_indices.get(s, -1)
 
-    successors_reversed_formated = ",\n    ".join(format_int_line(l) for l in successors_reversed.values())
 
-    print(TABLE_C.format(
+    if args.optimize_encoding:
+        log("finding best packing structures ... ", end="")
+        sys.stdout.flush()
+        counters = {}
+        for packed, _ in PACK_STRUCTURES[:args.encoding_types]:
+            counters[packed] = collections.Counter()
+
+        for chunk in chunkinator(args.file, args.split, args.strip):
+            for i in range(len(chunk)):
+                for packed, encodings in PACK_STRUCTURES[:args.encoding_types]:
+                    for encoding in encodings:
+                        if (encoding[0] > args.max_leading_char_bits) or (max(encoding[1:]) > args.max_successor_bits):
+                            continue
+                        if can_encode(chunk[i:], encoding, successors, chrs_indices):
+                            counters[packed][encoding] += packed / float(len(encoding))
+
+        best_encodings = [(packed, counter.most_common(1)[0][0]) for packed, counter in counters.items()]
+        max_encoding_len = max(len(encoding) for _, encoding in best_encodings)
+        best_encodings = [(packed, list(encoding) + [0] * (max_encoding_len - len(encoding))) for packed, encoding in best_encodings]
+        log("done.")
+    else:
+        best_encodings = [(1, [4, 2, 0, 0, 0, 0, 0, 0]),
+                          (2, [4, 3, 3, 3, 0, 0, 0, 0]),
+                          (4, [5, 4, 4, 4, 3, 3, 3, 2])][:args.encoding_types]
+        max_encoding_len = 8
+
+    packed = [packed for packed, _ in best_encodings]
+    lead = [bits[0] for _, bits in best_encodings]
+    header = list(range(2, 5))
+    successors_bits = [bits[1:] for _, bits in best_encodings]
+    successors_offsets_inverse = [accumulate(bits, header[i] + lead[i]) for i, bits in enumerate(successors_bits)]
+    successors_offsets = [[32 - o for o in offsets] for offsets in successors_offsets_inverse]
+    header_offsets = [32 - bits for bits in header]
+    lead_offsets = [header_offsets[i] - bits for i, bits in enumerate(lead)]
+    offsets = [[header_offsets[i]] + [lead_offsets[i]] + successors_offsets[i] for i in range(args.encoding_types)]
+    n_successors = [len([bit for bit in s if bit]) for s in successors_bits]
+    unpacked = [n + 1 for n in n_successors]
+
+    log("formating table file ... ", end="")
+    sys.stdout.flush()
+
+    pack_lines_formated = ",\n  ".join(
+        format_pack_line(packed[i],
+                         unpacked[i],
+                         header[i],
+                         lead[i],
+                         n_successors[i],
+                         format_int_line(successors_bits[i]),
+                         format_int_line(offsets[i]))
+        for i in range(args.encoding_types)
+    )
+    out = TABLE_C.format(
         chrs_count=chars_count,
-        bigrams_count=bigrams_count,
         successors_count=successors_count,
-        chrs=chrs_formated,
-        successors=successors_formated,
-        chrs_reversed=chrs_reversed_formated,
-        successors_reversed=successors_reversed_formated,
-        bigrams=bigrams_formated))
+        chrs=format_chr_line(successors.keys()),
+        successors="},\n  {".join(format_chr_line(l) for l in successors.values()),
+        chrs_reversed=format_int_line(chrs_reversed),
+        successors_reversed="},\n  {".join(format_int_line(l) for l in successors_reversed.values()),
+
+        pack_lines=pack_lines_formated,
+        max_successor_len=max_encoding_len - 1,
+        offsets_len=max_encoding_len + 1,
+        pack_count=args.encoding_types
+        )
+    log("done.")
+
+    log("writing table file ... ", end="")
+    sys.stdout.flush()
+    if args.output is None:
+        print(out)
+    else:
+        with open(args.output, "wb") as f:
+            f.write(out)
+    log("done.")
+
+def can_encode(part, encoding, successors, chrs_indices):
+    lead_index = chrs_indices.get(part[0], -1)
+    if lead_index < 0:
+        return False
+    if lead_index > (1 << encoding[0]):
+        return False
+    last_index = lead_index
+    last_char = part[0]
+    for bits, char in zip(encoding[1:], part[1:]):
+        if char not in successors[last_char]:
+            return False
+        successor_index = successors[last_char].index(char)
+        if successor_index > (1 << bits):
+            return False
+        last_index = successor_index
+        last_char = part[0]
+    return True
+
+
 
 if __name__ == "__main__":
     main()

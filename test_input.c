@@ -15,7 +15,7 @@ static int percent(double ratio) {
 }
 
 static void print(char *in, char *out, double ratio) {
-  printf("'%s', '%s', (%d%)\n", in, out, percent(ratio));
+  printf("'%s', '%s', (%d%%)\n", in, out, percent(ratio));
 }
 
 int main() {
@@ -37,9 +37,11 @@ int main() {
       ++count;
       ratios += rat;
     }
-    //print(buffer, out, rat);
+    if (0) {
+      print(buffer, out, rat);
+    }
     assert(strcmp(buffer, out) == 0);
   }
-  printf("\nNumber of compressed strings: %d, average compression ratio: %d%\n", count, percent(ratios / count));
+  printf("Number of compressed strings: %d, average compression ratio: %d%%\n", count, percent(ratios / count));
   return 0;
 }
