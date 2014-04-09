@@ -28,7 +28,10 @@ int main() {
   int inlen, complen;
 
   while (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
-    *strchr(buffer, '\n') = '\0';
+    char *end = strchr(buffer, '\n');
+    if (end != NULL)
+      *end = '\0';
+
     inlen = strlen(buffer);
     complen = shoco_compress(buffer, comp, BUFFER_SIZE);
     shoco_decompress(comp, out, BUFFER_SIZE);

@@ -1,31 +1,32 @@
 FLAGS=$(CFLAGS) -std=c99 -O3 -Wall -funroll-all-loops
-SOURCES=shoco.c test_input.c
+SOURCES=shoco.c
 OBJECTS=$(SOURCES:.c=.o)
 HEADERS=shoco.h shoco_table.h
-EXE=test_input
 GENERATOR=generate_successor_table.py
 TRAINING_DATA_DIR=training_data
-TRAINING_DATA=$(TRAINING_DATA_DIR)/%.txt
+TRAINING_DATA=$(wildcard training_data/*.txt)
 TABLES_DIR=tables
-TABLES=$(TABLES_DIR)/dictionary.h $(TABLES_DIR)/text_en.h $(TABLES_DIR)/words_en.h
+TABLES=$(TABLES_DIR)/text_en.h $(TABLES_DIR)/words_en.h
 
 .PHONY: all
-all: $(EXE)
+all: shoco
 
-$(EXE): $(OBJECTS)
-		$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+shoco: shoco-bin.o $(OBJECTS) $(TABLES)
+	$(CC) $(LDFLAGS) $(OBJECTS) $< -o $@
+
+test_input: test_input.o $(OBJECTS) $(TABLES)
+	$(CC) $(LDFLAGS) $(OBJECTS) $< -o $@
 
 $(OBJECTS): %.o: %.c $(HEADERS)
-		$(CC) $(FLAGS) $< -c
+	$(CC) $(FLAGS) $< -c
 
 .PHONY: tables
 tables: $(TABLES)
+	rm -f shoco_table.h
+	ln -s $(TABLES_DIR)/words_en.h shoco_table.h
 
-$(TABLES_DIR)/dictionary.h: $(TRAINING_DATA_DIR)/dictionary.txt $(GENERATOR)
-	pypy $(GENERATOR) $< -o $@
+$(TABLES_DIR)/text_en.h: $(TRAINING_DATA) $(GENERATOR)
+	python $(GENERATOR) $(TRAINING_DATA) -o $@
 
-$(TABLES_DIR)/text_en.h: $(TRAINING_DATA_DIR)/sherlock_holmes.txt $(GENERATOR)
-	pypy $(GENERATOR) $< -o $@
-
-$(TABLES_DIR)/words_en.h: $(TRAINING_DATA_DIR)/sherlock_holmes.txt $(GENERATOR)
-	pypy $(GENERATOR) --split=whitespace --strip=punctuation $< -o $@
+$(TABLES_DIR)/words_en.h: $(TRAINING_DATA) $(GENERATOR)
+	python $(GENERATOR) --split=whitespace --strip=punctuation $(TRAINING_DATA) -o $@

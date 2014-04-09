@@ -6,16 +6,6 @@ anywhere. It is internal to 'shoco.c'. Include 'shoco.h'
 if you want to use shoco in your project.
 */
 
-#ifdef _MSC_VER
-  #define ALIGNED __declspec(align(16))
-#else
-#if defined(__GNUC__)
-  #define ALIGNED __attribute__ ((aligned(16)))
-#else
-  #define ALIGNED
-#endif
-#endif
-
 static const char chrs[32] = {
   'e', 'i', 'o', 't', 'a', 'r', 'l', 's', 'n', 'u', 'c', 'd', 'h', 'm', 'v', 'p', 'g', 'b', 'k', 'f', 'q', 'z', 'w', '-', 'y', 'x', 'M', 'C', 'j', 'B', 'S', 'P'
 };
@@ -95,23 +85,24 @@ static const int successors_reversed[32][32] = {
 };
 
 
-typedef struct ALIGNED Pack {
+typedef struct Pack {
+  uint32_t word;
   unsigned int bytes_packed;
   unsigned int bytes_unpacked;
-  unsigned int header_bits;
-  unsigned int lead_bits;
   unsigned int n_successors;
-  unsigned const int successors_bits[7];
-  unsigned const int offsets[9];
+  unsigned const int offsets[8];
+  const int masks[8];
+  char header_mask;
+  char header;
 } Pack;
 
 #define PACK_COUNT 3
 #define MAX_SUCCESSOR_N 7
 
 static const Pack packs[PACK_COUNT] = {
-  { 1, 2, 2, 4, 1, { 2, 0, 0, 0, 0, 0, 0 }, { 30, 26, 24, 24, 24, 24, 24, 24, 24 } },
-  { 2, 4, 3, 4, 3, { 3, 3, 3, 0, 0, 0, 0 }, { 29, 25, 22, 19, 16, 16, 16, 16, 16 } },
-  { 4, 8, 4, 5, 7, { 4, 4, 4, 3, 3, 3, 2 }, { 28, 23, 19, 15, 11, 8, 5, 2, 0 } }
+  { 0x80000000, 1, 2, 1, { 26, 24, 24, 24, 24, 24, 24, 24 }, { 15, 3, 0, 0, 0, 0, 0, 0 }, 0xc0, 0x80 },
+  { 0xc0000000, 2, 4, 3, { 25, 22, 19, 16, 16, 16, 16, 16 }, { 15, 7, 7, 7, 0, 0, 0, 0 }, 0xe0, 0xc0 },
+  { 0xe0000000, 4, 8, 7, { 23, 19, 15, 11, 8, 5, 2, 0 }, { 31, 15, 15, 15, 7, 7, 7, 3 }, 0xf0, 0xe0 }
 };
 
 #endif
