@@ -6,27 +6,39 @@ GENERATOR=generate_successor_table.py
 TRAINING_DATA_DIR=training_data
 TRAINING_DATA=$(wildcard training_data/*.txt)
 TABLES_DIR=tables
-TABLES=$(TABLES_DIR)/text_en.h $(TABLES_DIR)/words_en.h
+TABLES=$(TABLES_DIR)/text_en.h $(TABLES_DIR)/words_en.h $(TABLES_DIR)/filepaths.h
 
 .PHONY: all
 all: shoco
 
-shoco: shoco-bin.o $(OBJECTS) $(TABLES)
+shoco: shoco-bin.o $(OBJECTS) $(HEADERS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $< -o $@
 
-test_input: test_input.o $(OBJECTS) $(TABLES)
+test_input: test_input.o $(OBJECTS) $(HEADERS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $< -o $@
 
 $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) $(FLAGS) $< -c
 
+shoco_table.h: $(TABLES_DIR)/words_en.h
+	cp $< $@
+
 .PHONY: tables
 tables: $(TABLES)
-	rm -f shoco_table.h
-	ln -s $(TABLES_DIR)/words_en.h shoco_table.h
 
 $(TABLES_DIR)/text_en.h: $(TRAINING_DATA) $(GENERATOR)
 	python $(GENERATOR) $(TRAINING_DATA) -o $@
 
 $(TABLES_DIR)/words_en.h: $(TRAINING_DATA) $(GENERATOR)
 	python $(GENERATOR) --split=whitespace --strip=punctuation $(TRAINING_DATA) -o $@
+
+# Warning: This is *slow*! Use pypy when possible
+$(TABLES_DIR)/filepaths.h: $(GENERATOR)
+	find /usr/ -print 2>/dev/null | python $(GENERATOR) --optimize-encoding -o $@
+
+.PHONY: check
+check: tests
+
+tests: tests.o $(OBJECTS) $(HEADERS)
+	$(CC) $(LDFLAGS) $(OBJECTS) $< -o $@
+	./tests

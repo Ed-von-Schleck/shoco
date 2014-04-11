@@ -14,11 +14,11 @@ static int percent(double ratio) {
   return ratio * 100;
 }
 
-static void print(char *in, char *out, double ratio) {
-  printf("'%s', '%s', (%d%%)\n", in, out, percent(ratio));
+static void print(char *in, double ratio) {
+  printf("'%s' (%d%%)\n", in, percent(ratio));
 }
 
-int main() {
+int main(int argc, char ** argv) {
   char buffer[BUFFER_SIZE] = { 0 };
   char comp[BUFFER_SIZE] = { 0 };
   char out[BUFFER_SIZE] = { 0 };
@@ -31,17 +31,19 @@ int main() {
     char *end = strchr(buffer, '\n');
     if (end != NULL)
       *end = '\0';
+    else
+      break;
 
     inlen = strlen(buffer);
-    complen = shoco_compress(buffer, comp, BUFFER_SIZE);
-    shoco_decompress(comp, out, BUFFER_SIZE);
+    complen = shoco_compress(buffer, comp, BUFFER_SIZE, 0);
+    shoco_decompress(comp, out, BUFFER_SIZE, 0);
     rat = ratio(inlen, complen);
     if (complen != 0) {
       ++count;
       ratios += rat;
     }
-    if (0) {
-      print(buffer, out, rat);
+    if ((argc > 1) && ((strcmp(argv[1], "-v") == 0) || (strcmp(argv[1], "--verbose") == 0))) {
+      print(buffer, rat);
     }
     assert(strcmp(buffer, out) == 0);
   }

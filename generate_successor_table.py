@@ -92,7 +92,7 @@ class Bits(Structure):
 
 class Masks(Structure):
     def __init__(self, bitlist):
-        Structure.__init__(self, [((1 << bits) -1) if bits else 0 for bits in bitlist])
+        Structure.__init__(self, [((1 << bits) -1) for bits in bitlist])
 
 class Offsets(Structure):
     def __init__(self, bitlist):
@@ -297,7 +297,8 @@ def main():
     log("finding bigrams ... ", end="")
     sys.stdout.flush()
     bigram_counter = collections.Counter()
-    for chunk in chunkinator(args.file, args.split, args.strip):
+    chunks = list(chunkinator(args.file, args.split, args.strip))
+    for chunk in chunks:
         bgs = list(bigrams(chunk))
         for bg in bgs:
             bigram_counter[bg] += 1
@@ -328,7 +329,7 @@ def main():
         for packed, _ in ENCODINGS[:args.encoding_types]:
             counters[packed] = collections.Counter()
 
-        for chunk in chunkinator(args.file, args.split, args.strip):
+        for chunk in chunks:
             for i in range(len(chunk)):
                 for packed, encodings in ENCODINGS[:args.encoding_types]:
                     for encoding in encodings:
@@ -341,7 +342,6 @@ def main():
         max_encoding_len = max(encoding.size for _, encoding in best_encodings_raw)
         best_encodings = [Encoding(encoding.bits.datalist + [0] * (MAX_CONSECUTIVES - encoding.size)) for packed, encoding in best_encodings_raw]
         log("done.")
-        print(best_encodings)
     else:
         max_encoding_len = 8
         best_encodings = [Encoding([2, 4, 2, 0, 0, 0, 0, 0, 0]),

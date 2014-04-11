@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <limits.h>
+#include <assert.h>
 
 #if (defined (__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || __BIG_ENDIAN__)
   #define swap(x) (x)
@@ -89,19 +91,19 @@ static inline int find_best_encoding(const short indices[MAX_SUCCESSOR_N + 1], i
   return -1;
 }
 
-int shoco_compress(const char * const restrict original, char * const restrict out, int len) {
-  int fits = 0;
+int shoco_compress(const char * const restrict original, char * const restrict out, int bufsize, int strlen) {
   char *o = out;
   const char *in = original;
-  short _ALIGNED indices[8] = { 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, };
+  short _ALIGNED indices[8] = { 0 };
   int last_chr_index;
   int current_index;
   int successor_index;
   int n_consecutive = 0;
   union Code code;
+  strlen = strlen <= 0 ? INT_MAX : strlen;
 
-  while (in[0] != '\0') {
-    if (unlikely(o + 1 >= out + len))
+  while (*in != '\0') {
+    if (unlikely(in - original > strlen))
       goto end;
 
     // find the longest string of known successors
@@ -110,7 +112,7 @@ int shoco_compress(const char * const restrict original, char * const restrict o
     if (last_chr_index == -1)
       goto last_resort;
 
-    for (n_consecutive = 1; n_consecutive <= MAX_SUCCESSOR_N; ++n_consecutive) {
+    for (n_consecutive = 1; (n_consecutive <= MAX_SUCCESSOR_N) && (in - original + n_consecutive <= strlen); ++n_consecutive) {
       current_index = chrs_reversed[(unsigned char)in[n_consecutive]];
       if (current_index < 0)  // this includes '\0'
         break;
@@ -127,48 +129,51 @@ int shoco_compress(const char * const restrict original, char * const restrict o
 
     int p = find_best_encoding(indices, n_consecutive);
     if (p >= 0) {
-        if (unlikely(o + packs[p].bytes_packed >= out + len))
-          goto end;
+      if (unlikely(o + packs[p].bytes_packed > out + bufsize))
+        goto fail;
 
-        code.word = packs[p].word;
-        for (int i = 0; i < packs[p].bytes_unpacked; ++i)
-          code.word |= indices[i] << packs[p].offsets[i];
+      code.word = packs[p].word;
+      for (int i = 0; i < packs[p].bytes_unpacked; ++i)
+        code.word |= indices[i] << packs[p].offsets[i];
 
-        // in the little-endian world, we need to swap what's
-        // in the register to match the memory representation
-        code.word = swap(code.word);
+      // in the little-endian world, we need to swap what's
+      // in the register to match the memory representation
+      code.word = swap(code.word);
 
-        // if we'd just copy the, we could write over the end
-        // of the output string
-        for (int i = 0; i < packs[p].bytes_packed; ++i)
-          o[i] = code.bytes[i];
+      // if we'd just copy the, we could write over the end
+      // of the output string
+      for (int i = 0; i < packs[p].bytes_packed; ++i)
+        o[i] = code.bytes[i];
 
-        o += packs[p].bytes_packed;
-        in += packs[p].bytes_unpacked;
+      o += packs[p].bytes_packed;
+      in += packs[p].bytes_unpacked;
     } else {
 last_resort:
       if (unlikely(*in & 0x80)) {
-        if (unlikely(o + 2 >= out + len))
-          goto end;
+        if (unlikely(o - out + 2 > bufsize))
+          goto fail;
         // non-ascii case
         // put in a sentinel byte
         *o++ = 0xff;
         // and pretend it's just ...
       }
+      if (unlikely(o - out + 1 > bufsize))
+        goto fail;
+
       // an ascii byte
       *o++ = *in++;
     }
   }
 
-  fits = 1;
-
 end:
-  *o++ = '\0';
-  return o - out - fits;
+  if (o  - out < bufsize)
+    *o = '\0';
+  return o - out;
+fail:
+  return bufsize + 1;
 }
 
-int shoco_decompress(const char * const restrict original, char * const restrict out, int len) {
-  int fits = 0;
+int shoco_decompress(const char * const restrict original, char * const restrict out, int bufsize, int strlen) {
   char *o = out;
   const char *in = original;
   unsigned char current_char;
@@ -177,16 +182,23 @@ int shoco_decompress(const char * const restrict original, char * const restrict
   int offset;
   int mask;
   int mark;
+  strlen = strlen <= 0 ? INT_MAX : strlen;
 
   while (*in != '\0') {
+    if (unlikely(in - original > strlen))
+      goto end;
+
     mark = decode_header(*in);
     if (mark < 0) {
-      if (unlikely(o + 1 >= out + len))
-        goto end;
+      if (unlikely(o - out + 1 > bufsize))
+        goto fail;
       *o++ = *in++;
     } else if (mark < PACK_COUNT) {
-      if (unlikely(o + packs[mark].bytes_unpacked >= out + len))
-        goto end;
+      if (unlikely(o - out + packs[mark].bytes_unpacked > bufsize))
+        goto fail;
+
+      if (unlikely(in - original + packs[mark].bytes_packed > strlen))
+        goto fail;
 
       code.word = 0;
       for (int i = 0; i < packs[mark].bytes_packed; ++i)
@@ -210,16 +222,17 @@ int shoco_decompress(const char * const restrict original, char * const restrict
       in += packs[mark].bytes_packed;
     } else {
       // non-ascii character
-      if (unlikely(o + 1 >= out + len))
-        goto end;
+      if (unlikely(o - out  + 1 > bufsize))
+        goto fail;
       ++in;
       *o++ = *in++;
     }
   }
 
-  fits = 1;
-
 end:
-  *o++ = '\0';
-  return o - out - fits;
+  if (o  - out < bufsize)
+    *o = '\0';
+  return o - out;
+fail:
+  return bufsize + 1;
 }
