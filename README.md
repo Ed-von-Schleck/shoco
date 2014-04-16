@@ -22,9 +22,9 @@ That's it. If the `strlen` argument for `shoco_compress` is 0, the input char is
 
 The return value is the number of bytes written. If it is less than `bufsize`, all is well. In case of decompression, a `\0`-terminator is written. If the return value is exactly `bufsize`, the output is all there, but _not_ `\0`-terminated. It is up to you to decide if that's an error or not. If the buffer is not large enough for the output, the return value will be `bufsize` + 1. You might want to allocate a bigger output buffer. The compressed string will never be `\0`-terminated.
 
-If you are sure that the input data is plan ASCII, your `out` buffer for `shoco_compress` only needs to be as large as the input string (add 1 byte if you want it to be `\0`-terminated). Otherwise, the output buffer may need to be up to 2x as large as the input, if it's a 1-byte encoding, or even larger for multi-byte encodings like UTF-8.
+If you are sure that the input data is plan ASCII, your `out` buffer for `shoco_compress` only needs to be as large as the input string. Otherwise, the output buffer may need to be up to 2x as large as the input, if it's a 1-byte encoding, or even larger for multi-byte encodings like UTF-8.
 
-For the standard values of _shoco_, maximum compression is 50%, so the `out` buffer of `shoco_decompress` needs to be a maximum of twice the size of the compressed string.
+For the standard values of _shoco_, maximum compression is 50%, so the `out` buffer for `shoco_decompress` needs to be a maximum of twice the size of the compressed string.
 
 Generating Tables
 -----------------
