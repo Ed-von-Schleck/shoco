@@ -18,7 +18,7 @@ int shoco_compress(const char * const in, char * const out, int bufsize, int str
 int shoco_decompress(const char * const in, char * const out, int bufsize, int complen);
 ```
 
-That's it. If the `strlen` argument for `shoco_compress` is 0, the input char is assumed to be `\0`-terminated. If it's a positive integer, parsing the input will stop after this length, or at a `\0`-char, whatever comes first. `shoco_decompress` however will need a positive integer for `complen` (most likely you should pass the return value of `shoco_compress`, or this value +1 if you want your decompressed string to be `\0`-terminated).
+That's it. If the `strlen` argument for `shoco_compress` is 0, the input char is assumed to be `\0`-terminated. If it's a positive integer, parsing the input will stop after this length, or at a `\0`-char, whatever comes first. `shoco_decompress` however will need a positive integer for `complen` (most likely you should pass the return value of `shoco_compress`).
 
 The return value is the number of bytes written. If it is less than `bufsize`, all is well. In case of decompression, a `\0`-terminator is written. If the return value is exactly `bufsize`, the output is all there, but _not_ `\0`-terminated. It is up to you to decide if that's an error or not. If the buffer is not large enough for the output, the return value will be `bufsize` + 1. You might want to allocate a bigger output buffer. The compressed string will never be `\0`-terminated.
 
