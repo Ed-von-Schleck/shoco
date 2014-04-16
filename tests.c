@@ -27,7 +27,7 @@ int main() {
   buf_2[1] = 'x';
   ret = shoco_compress("a", buf_2, 2, 0);
   assert(ret == 1); // compressed string length without null byte
-  assert(buf_2[1] == '\0'); // null byte written
+  assert(buf_2[1] == 'x'); // Canary is still alive
 
   ret = shoco_compress("a", buf_4, 4, 0);
   assert(ret == 1);
@@ -38,22 +38,22 @@ int main() {
   buf_4[1] = 'x';
   ret = shoco_compress("test", buf_4, 4, 1); // buffer large enough, but strlen said "just compress first char"
   assert(ret == 1);
-  assert(buf_4[1] == '\0'); // null byte written
+  assert(buf_4[1] == 'x');
 
-  buf_4[1] = 'x';
+  buf_4[1] = 'y';
   ret = shoco_compress("test", buf_4, 1, 1);
   assert(ret == 1);
-  assert(buf_4[1] != '\0'); // no null byte written
+  assert(buf_4[1] == 'y'); // no null byte written
 
-  buf_4[1] = 'x';
+  buf_4[1] = 'z';
   ret = shoco_compress("a", buf_4, 4, 1);
   assert(ret == 1);
-  assert(buf_4[1] == '\0');
+  assert(buf_4[1] == 'z');
 
-  buf_4[1] = 'x';
+  buf_4[1] = 'b';
   ret = shoco_compress("a", buf_4, 4, 2);
   assert(ret == 1);
-  assert(buf_4[1] == '\0');
+  assert(buf_4[1] == 'b');
 
   ret = shoco_compress("ä", buf_1, 1, 0); // this assumes that 'ä' is not in the frequent chars table
   assert(ret == 2);
@@ -62,19 +62,20 @@ int main() {
   //test decompression
   char compressed_large[4096];
   int large_len = strlen(LARGE_STR);
-  shoco_compress(LARGE_STR, compressed_large, 4096, 0);
+  int comp_len;
+  comp_len = shoco_compress(LARGE_STR, compressed_large, 4096, 0);
 
   buf_large[large_len] = 'x';
-  ret = shoco_decompress(compressed_large, buf_large, 4096, 0);
+  ret = shoco_decompress(compressed_large, buf_large, 4096, comp_len);
   assert(ret == large_len);
   assert(strcmp(buf_large, LARGE_STR) == 0);
   assert(buf_large[large_len] == '\0'); // null byte written
   
-  ret = shoco_decompress(compressed_large, buf_2, 2, 0);
+  ret = shoco_decompress(compressed_large, buf_2, 2, comp_len);
   assert(ret == 3); // ret = bufsize + 1, because buffer too small
 
   buf_large[large_len] = 'x';
-  ret = shoco_decompress(compressed_large, buf_large, large_len, 0);
+  ret = shoco_decompress(compressed_large, buf_large, large_len, comp_len);
   assert(ret == large_len);
   assert(buf_large[large_len] != '\0'); // no null byte written
 
@@ -84,10 +85,10 @@ int main() {
 
   char compressed_non_ascii[256];
   int non_ascii_len = strlen(NON_ASCII_STR);
-  shoco_compress(NON_ASCII_STR, compressed_non_ascii, 256, 0);
+  comp_len = shoco_compress(NON_ASCII_STR, compressed_non_ascii, 256, 0);
 
   buf_large[non_ascii_len] = 'x';
-  ret = shoco_decompress(compressed_non_ascii, buf_large, 4096, 0);
+  ret = shoco_decompress(compressed_non_ascii, buf_large, 4096, comp_len);
   assert(ret == non_ascii_len);
   assert(strcmp(buf_large, NON_ASCII_STR) == 0);
   assert(buf_large[non_ascii_len] == '\0'); // null byte written
