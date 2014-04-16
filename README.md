@@ -121,3 +121,13 @@ decompression time | 0.010s    | 0.048s    | 0.148s
 compressed size    | 3,393,975 | 1,476,083 | 1,229,980
 
 This demonstates quite clearly that _shoco_'s compression rate sucks, but also that it's _very_ fast.
+
+License
+-------
+
+_shoco_ is published under the MIT license; see the LICENSE file for details.
+
+Authors
+-------
+
+_shoco_ is written by Christian Schramm.
