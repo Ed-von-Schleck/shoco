@@ -100,7 +100,7 @@ Since generating tables can be slow if your input data is large, and _especially
 Comparison With Other Compressors
 ---------------------------------
 
-=== smaz ===
+### smaz ###
 
 There's another good small string compressor out there: [smaz](https://github.com/antirez/smaz). Smaz seems to be dictionary based, while _shoco_ is an entropy encoder. As a result, smaz ill often do better than _shoco_ when compressing common english terms. However, _shoco_ typically beats smaz for more obscure input, as long as it's ASCII. Smaz may enlarge your string for uncommon words (like numbers), _shoco_ will never do that for ASCII strings.
 
@@ -108,7 +108,7 @@ Performance-wise, _shoco_ is typically faster by at least a factor of 2. As an e
 
 _shoco_ can be trained with user data, while _smaz_'s dictionary is built-in. That said, the maximum compression rate of _smaz_ is hard to reach for _shoco_, so depending on your input type, you might fare better with _smaz_ (there's no way around it: You have to measure it yourself).
 
-=== gzip ===
+### gzip ###
 
 _shoco_'s compression ratio can't (and doesn't want to) compete with gzip et al. for string sizes bigger than, say, a hundred bytes or so. But for strings up to that size, _shoco_ is a good contender, and for very very small strings, it will always be better than standard compressors.
 
