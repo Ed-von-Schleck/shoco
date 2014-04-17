@@ -127,22 +127,24 @@ This demonstates quite clearly that _shoco_'s compression rate sucks, but also t
 Use Cases
 ----------
 
-As of now, there are no known uses of _shoco_ in real-life projects. If you do use _shoco_, I would love to hear about it! Possible use cases might include i18n tools like gettext (Strings appearing in GUIs tend to be rather short, and should compress quite well), or transfering short messages over a slow network (Twitter?), especially if the cpus on either side are too undepowered to run full-blown compressors (like embedded devices sometimes are).
+As of now, there are no known uses of _shoco_ in real-life projects. If you do use _shoco_, I would love to hear about it! Possible use cases might include i18n tools like gettext (strings appearing in GUIs tend to be rather short, and should compress quite well), or transfering short messages over a slow network (Twitter?), especially if the cpus on either side are too undepowered to run full-blown compressors (like embedded devices sometimes are).
 
 To Do
 -----
 
-_shoco_ works for me – but I'd have only tested it on x86_64 Linux. Feedback on how it runs on other systems, especially Windows, would be highly appreciated! If it fails, it's a bug (and given the size of the project, it should be easy to fix). Other than that, there's a few issues that could stand some improvements:
+_shoco_ is stable, and it works well – but I'd have only tested it with gcc on x86_64 Linux. Feedback on how it runs on other OSes, compilers and architectures would be highly appreciated! If it fails, it's a bug (and given the size of the project, it should be easy to fix). Other than that, there's a few issues that could stand some improvements:
 
 * There should be more tests, because there's _never_ enough tests. Ever. Patches are very welcome!
 * Tests should include table generation. As that involves re-compilation, these should probably written as a Makefile, or in bash or Python (maybe using `ctypes` to call the _shoco_-functions directly).
 * The Python script for table generation should see some clean-up, as well as documentation. Also it should utilize all cpu cores (presumably via the `multiprocess`-module). This is a good task for new contributers!
-* Again for table generation: Investigate why _pypy_ isn't as fast as should be expected.
+* Again for table generation: Investigate why _pypy_ isn't as fast as should be expected ([jitviewer](https://bitbucket.org/pypy/jitviewer/) might be of help here).
+* Generate Javascript code with emscripten, so that _shoco_ can be used with web services.
+* The current SSE2 optimization is probably not optimal. Anyone who loves to tinker with these kinds of micro-optimizations is invited to try his or her hand here.
 
-Saying Thanks
--------------
+Feedback
+--------
 
-If you use _shoco_, or like it for whatever reason, I'd really love to hear from you! Also, please consider supporting me financially via
+If you use _shoco_, or like it for whatever reason, I'd really love to hear from you! Also, a nice way of saying thanks is to support me financially via
 [git tip](https://www.gittip.com/Ed-von-Schleck/) or [flattr](https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://github.com/Ed-von-Schleck/&title=shoco&language=C&tags=github&category=software).
 
 License
