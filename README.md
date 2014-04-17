@@ -134,7 +134,8 @@ To Do
 
 _shoco_ works for me – but I'd have only tested it on x86_64 Linux. Feedback on how it runs on other systems, especially Windows, would be highly appreciated! If it fails, it's a bug (and given the size of the project, it should be easy to fix). Other than that, there's a few issues that could stand some improvements:
 
-* Tests should include table generation. As that involves re-compilation, these should probably written in bash or Python (maybe using ctypes to call the _shoco_-functions directly).
+* There should be more tests, because there's _never_ enough tests. Ever. Patches are highly welcome!
+* Tests should include table generation. As that involves re-compilation, these should probably written as a Makefile, or in bash or Python (maybe using `ctypes` to call the _shoco_-functions directly).
 * The Python script for table generation should see some clean-up, as well as documentation. Also it should utilize all cpu cores (presumably via the `multiprocess`-module). This is a good task for new contributers!
 * Again for table generation: Investigate why _pypy_ isn't as fast as should be expected.
 
@@ -142,7 +143,7 @@ Saying Thanks
 -------------
 
 If you use _shoco_, or like it for whatever reason, I'd really love to hear from you! Please consider supporting me financially via
-[git tip](https://www.gittip.com/Ed-von-Schleck/) or [![flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://github.com/Ed-von-Schleck/&title=shoco&language=C&tags=github&category=software)
+[git tip](https://www.gittip.com/Ed-von-Schleck/) or [flattr](https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://github.com/Ed-von-Schleck/&title=shoco&language=C&tags=github&category=software).
 
 License
 -------
