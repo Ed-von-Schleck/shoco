@@ -124,7 +124,7 @@ compressed size    | 3,393,975 | 1,476,083 | 1,229,980
 
 This demonstates quite clearly that _shoco_'s compression rate sucks, but also that it's _very_ fast.
 
-User Cases
+Use Cases
 ----------
 
 As of now, there are no known uses of _shoco_ in real-life projects. If you do use _shoco_, I would love to hear about it! Possible use cases might include i18n tools like gettext (Strings appearing in GUIs tend to be rather short, and should compress quite well), or transfering short messages over a slow network (Twitter?), especially if the cpus on either side are too undepowered to run full-blown compressors (like embedded devices sometimes are).
