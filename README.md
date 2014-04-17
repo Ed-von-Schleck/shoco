@@ -3,6 +3,8 @@ shoco
 
 _shoco_ compresses short strings to be even smaller. It is very fast, but the most remarkable property is:  If your string is ASCII, _shoco_ guarantees that the compressed string will never be bigger than the input string. In fact, an ASCII string is proper input for the decompressor (and of course, it decompresses to the exact same string). _shoco_ comes with sane defaults, but includes the tools to train the compressor for _your_ specific type of input data. The maximum compression rate is 50%, but usually in the range of 30%-35% (although if you have _very_ special data, and trained _shoco_ accordingly, it might even be better).
 
+_shoco_'s focus lies less on maximum compression (on might want to device an arithmetic coder or something similar to achieve this), but on speed and simplicity of code. Even when compressing and decompressing millions of strings, you should not experience a noticable impact as compared to using plain strings.
+
 Installation
 ------------
 
@@ -14,15 +16,15 @@ API
 ---
 
 ```C
-int shoco_compress(const char * const in, char * const out, int bufsize, int strlen);
-int shoco_decompress(const char * const in, char * const out, int bufsize, int complen);
+size_t shoco_compress(const char * const in, size_t len, char * const out, size_t bufsize);
+size_t shoco_decompress(const char * const in, size_t len, char * const out, size_t bufsize);
 ```
 
-That's it. If the `strlen` argument for `shoco_compress` is 0, the input char is assumed to be `\0`-terminated. If it's a positive integer, parsing the input will stop after this length, or at a `\0`-char, whatever comes first. `shoco_decompress` however will need a positive integer for `complen` (most likely you should pass the return value of `shoco_compress`).
+That's it. If the `len` argument for `shoco_compress` is 0, the input char is assumed to be `\0`-terminated. If it's a positive integer, parsing the input will stop after this length, or at a `\0`-char, whatever comes first. `shoco_decompress` however will need a positive integer for `len` (most likely you should pass the return value of `shoco_compress`).
 
 The return value is the number of bytes written. If it is less than `bufsize`, all is well. In case of decompression, a `\0`-terminator is written. If the return value is exactly `bufsize`, the output is all there, but _not_ `\0`-terminated. It is up to you to decide if that's an error or not. If the buffer is not large enough for the output, the return value will be `bufsize` + 1. You might want to allocate a bigger output buffer. The compressed string will never be `\0`-terminated.
 
-If you are sure that the input data is plan ASCII, your `out` buffer for `shoco_compress` only needs to be as large as the input string. Otherwise, the output buffer may need to be up to 2x as large as the input, if it's a 1-byte encoding, or even larger for multi-byte encodings like UTF-8.
+If you are sure that the input data is plain ASCII, your `out` buffer for `shoco_compress` only needs to be as large as the input string. Otherwise, the output buffer may need to be up to 2x as large as the input, if it's a 1-byte encoding, or even larger for multi-byte encodings like UTF-8.
 
 For the standard values of _shoco_, maximum compression is 50%, so the `out` buffer for `shoco_decompress` needs to be a maximum of twice the size of the compressed string.
 
@@ -108,7 +110,7 @@ Performance-wise, _shoco_ is typically faster by at least a factor of 2. As an e
 
 _shoco_ can be trained with user data, while _smaz_'s dictionary is built-in. That said, the maximum compression rate of _smaz_ is hard to reach for _shoco_, so depending on your input type, you might fare better with _smaz_ (there's no way around it: You have to measure it yourself).
 
-### gzip ###
+### gzip, xz ###
 
 _shoco_'s compression ratio can't (and doesn't want to) compete with gzip et al. for string sizes bigger than, say, a hundred bytes or so. But for strings up to that size, _shoco_ is a good contender, and for very very small strings, it will always be better than standard compressors.
 
@@ -121,6 +123,26 @@ decompression time | 0.010s    | 0.048s    | 0.148s
 compressed size    | 3,393,975 | 1,476,083 | 1,229,980
 
 This demonstates quite clearly that _shoco_'s compression rate sucks, but also that it's _very_ fast.
+
+User Cases
+----------
+
+As of now, there are no known uses of _shoco_ in real-life projects. If you do use _shoco_, I would love to hear about it! Possible use cases might include i18n tools like gettext (Strings appearing in GUIs tend to be rather short, and should compress quite well), or transfering short messages over a slow network (Twitter?), especially if the cpus on either side are too undepowered to run full-blown compressors (like embedded devices sometimes are).
+
+To Do
+-----
+
+_shoco_ works for me – but I'd have only tested it on x86_64 Linux. Feedback on how it runs on other systems, especially Windows, would be highly appreciated! If it fails, it's a bug (and given the size of the project, it should be easy to fix). Other than that, there's a few issues that could stand some improvements:
+
+* Tests should include table generation. As that involves re-compilation, these should probably written in bash or Python (maybe using ctypes to call the _shoco_-functions directly).
+* The Python script for table generation should see some clean-up, as well as documentation. Also it should utilize all cpu cores (presumably via the `multiprocess`-module). This is a good task for new contributers!
+* Again for table generation: Investigate why _pypy_ isn't as fast as should be expected.
+
+Saying Thanks
+-------------
+
+If you use _shoco_, or like it for whatever reason, I'd really love to hear from you! Please consider supporting me financially via
+[git tip](https://www.gittip.com/Ed-von-Schleck/) or [![flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://github.com/Ed-von-Schleck/&title=shoco&language=C&tags=github&category=software)
 
 License
 -------

@@ -35,8 +35,8 @@ int main(int argc, char ** argv) {
       break;
 
     inlen = strlen(buffer);
-    complen = shoco_compress(buffer, comp, BUFFER_SIZE, 0);
-    shoco_decompress(comp, out, BUFFER_SIZE, complen);
+    complen = shoco_compress(buffer, 0, comp, BUFFER_SIZE);
+    shoco_decompress(comp, complen, out, BUFFER_SIZE);
     rat = ratio(inlen, complen);
     if (complen != 0) {
       ++count;

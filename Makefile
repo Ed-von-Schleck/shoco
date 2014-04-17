@@ -12,10 +12,10 @@ TABLES=$(TABLES_DIR)/text_en.h $(TABLES_DIR)/words_en.h $(TABLES_DIR)/filepaths.
 all: shoco
 
 shoco: shoco-bin.o $(OBJECTS) $(HEADERS)
-	$(CC) $(LDFLAGS) $(OBJECTS) $< -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) -s $< -o $@
 
 test_input: test_input.o $(OBJECTS) $(HEADERS)
-	$(CC) $(LDFLAGS) $(OBJECTS) $< -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) -s $< -o $@
 
 $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) $(FLAGS) $< -c

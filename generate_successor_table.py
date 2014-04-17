@@ -2,12 +2,10 @@
 
 from __future__ import print_function
 
-import fileinput
 import collections
 import argparse
 import itertools
 import re
-import string
 import sys
 
 WHITESPACE = b" \t\n\r\x0b\x0c\xc2\xad"
@@ -23,20 +21,23 @@ anywhere. It is internal to 'shoco.c'. Include 'shoco.h'
 if you want to use shoco in your project.
 */
 
-static const char chrs[{chrs_count}] = {{
+#define MIN_CHR {min_chr}
+#define MAX_CHR {max_chr}
+
+static const char chrs_by_chr_id[{chrs_count}] = {{
   {chrs}
 }};
 
-static const int successors_indices[{chrs_count}][{successors_count}] = {{
-  {{{successors_indices}}}
-}};
-
-static const int chrs_reversed[256] = {{
+static const int8_t chr_ids_by_chr[256] = {{
   {chrs_reversed}
 }};
 
-static const int successors_reversed[{chrs_count}][{chrs_count}] = {{
+static const int8_t successor_ids_by_chr_id_and_chr_id[{chrs_count}][{chrs_count}] = {{
   {{{successors_reversed}}}
+}};
+
+static const int8_t chrs_by_chr_and_successor_id[MAX_CHR - MIN_CHR][{successors_count}] = {{
+  {{{chrs_by_chr_and_successor_id}}}
 }};
 
 
@@ -293,12 +294,11 @@ def main():
         successors[char] = [successor for successor, freq in bigram_counters[char].most_common(1 << args.max_successor_bits)]
         successors[char] += ['\0'] * ((1 << args.max_successor_bits) - len(successors[char]))
 
+    max_chr = ord(max(successors.keys())) + 1
+    min_chr = ord(min(successors.keys()))
+
     chrs_indices = collections.OrderedDict(zip(successors.keys(), range(chars_count)))
     chrs_reversed = [chrs_indices.get(chr(i), -1) for i in range(256)]
-
-    successors_indices = collections.OrderedDict()
-    for char, successor_list in successors.items():
-        successors_indices[char] = [chrs_indices.get(s, -1) for s in successor_list]
 
     successors_reversed = collections.OrderedDict()
     for char, successor_list in successors.items():
@@ -306,6 +306,9 @@ def main():
         s_indices = collections.OrderedDict(zip(successor_list, range(chars_count)))
         for i, s in enumerate(successors.keys()):
             successors_reversed[char][i] = s_indices.get(s, -1)
+
+    zeros_line = ['\0'] * (1 << args.max_successor_bits)
+    chrs_by_chr_and_successor_id = [successors.get(chr(i), zeros_line) for i in range(min_chr, max_chr)]
 
 
     if args.optimize_encoding:
@@ -354,14 +357,16 @@ def main():
         chrs_count=chars_count,
         successors_count=successors_count,
         chrs=format_chr_line(successors.keys()),
-        successors_indices="},\n  {".join(format_chr_line(l) for l in successors_indices.values()),
         chrs_reversed=format_int_line(chrs_reversed),
         successors_reversed="},\n  {".join(format_int_line(l) for l in successors_reversed.values()),
+        chrs_by_chr_and_successor_id="},\n  {".join(format_chr_line(l) for l in chrs_by_chr_and_successor_id),
 
         pack_lines=pack_lines_formated,
         max_successor_len=max_encoding_len - 1,
         max_elements_len=MAX_CONSECUTIVES,
-        pack_count=args.encoding_types
+        pack_count=args.encoding_types,
+        max_chr=max_chr,
+        min_chr=min_chr
     )
     log("done.")
 

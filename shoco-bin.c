@@ -12,7 +12,7 @@ typedef enum {
   JOB_DECOMPRESS,
 } Job;
 
-#define BUFFER_SIZE 65536
+#define MAX_STACK_ALLOCATION_SIZE 65536
 
 int main(int argc, char **argv) {
   Job job; 
@@ -49,35 +49,34 @@ int main(int argc, char **argv) {
   in_size = ftell(fin);
   rewind(fin);
 
-  if (in_size > BUFFER_SIZE) {
-    in_buffer = (char*) malloc(sizeof(char) * in_size);
-    out_buffer = (char*) malloc(sizeof(char) * in_size * 4);
+  if (in_size > MAX_STACK_ALLOCATION_SIZE) {
+    in_buffer = (char *)malloc(sizeof(char) * in_size);
+    out_buffer = (char *)malloc(sizeof(char) * in_size * 4);
     if ((in_buffer == NULL) || (out_buffer == NULL)) {
       fputs("Memory error. This really shouldn't happen.", stderr);
       exit(2);
     }
   } else {
-    in_buffer = (char*) alloca(sizeof(char) * in_size);
-    out_buffer = (char*) alloca(sizeof(char) * in_size * 4);
+    in_buffer = (char *)alloca(sizeof(char) * in_size);
+    out_buffer = (char *)alloca(sizeof(char) * in_size * 4);
   }
 
-  if (fread (in_buffer, sizeof(char), in_size, fin) != in_size) {
-    fputs("Reading error", stderr);
+  if (fread(in_buffer, sizeof(char), in_size, fin) != in_size) {
+    fputs("Error reading the input file.", stderr);
     exit(3);
   }
   fclose(fin);
 
-  if (job == JOB_COMPRESS) {
-    len = shoco_compress(in_buffer, out_buffer, in_size * 4, in_size);
-  } else {
-    len = shoco_decompress(in_buffer, out_buffer, in_size * 4, in_size);
-  }
+  if (job == JOB_COMPRESS)
+    len = shoco_compress(in_buffer, in_size, out_buffer, in_size * 4);
+  else
+    len = shoco_decompress(in_buffer, in_size, out_buffer, in_size * 4);
 
-  fout = fopen (outfile, "wb");
-  fwrite (out_buffer , sizeof(char), len, fout);
+  fout = fopen(outfile, "wb");
+  fwrite(out_buffer , sizeof(char), len, fout);
   fclose(fout);
 
-  if (in_size > BUFFER_SIZE) {
+  if (in_size > MAX_STACK_ALLOCATION_SIZE) {
     free(in_buffer);
     free(out_buffer);
   }
