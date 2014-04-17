@@ -104,7 +104,7 @@ Comparison With Other Compressors
 
 ### smaz ###
 
-There's another good small string compressor out there: [smaz](https://github.com/antirez/smaz). Smaz seems to be dictionary based, while _shoco_ is an entropy encoder. As a result, smaz ill often do better than _shoco_ when compressing common english terms. However, _shoco_ typically beats smaz for more obscure input, as long as it's ASCII. Smaz may enlarge your string for uncommon words (like numbers), _shoco_ will never do that for ASCII strings.
+There's another good small string compressor out there: [smaz](https://github.com/antirez/smaz). Smaz seems to be dictionary based, while _shoco_ is an entropy encoder. As a result, smaz will often do better than _shoco_ when compressing common english terms. However, _shoco_ typically beats smaz for more obscure input, as long as it's ASCII. Smaz may enlarge your string for uncommon words (like numbers), _shoco_ will never do that for ASCII strings.
 
 Performance-wise, _shoco_ is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in `/usr/dict/share/words` with _smaz_ takes around 0.325s on my computer and compresses on average by 28%, while _shoco_ has a compression average of 33% (with the standard table; an optimized table will be even better) and takes around 0.140s. _shoco_ is _especially_ fast at decompression.
 
@@ -134,7 +134,7 @@ To Do
 
 _shoco_ works for me – but I'd have only tested it on x86_64 Linux. Feedback on how it runs on other systems, especially Windows, would be highly appreciated! If it fails, it's a bug (and given the size of the project, it should be easy to fix). Other than that, there's a few issues that could stand some improvements:
 
-* There should be more tests, because there's _never_ enough tests. Ever. Patches are highly welcome!
+* There should be more tests, because there's _never_ enough tests. Ever. Patches are very welcome!
 * Tests should include table generation. As that involves re-compilation, these should probably written as a Makefile, or in bash or Python (maybe using `ctypes` to call the _shoco_-functions directly).
 * The Python script for table generation should see some clean-up, as well as documentation. Also it should utilize all cpu cores (presumably via the `multiprocess`-module). This is a good task for new contributers!
 * Again for table generation: Investigate why _pypy_ isn't as fast as should be expected.
@@ -142,7 +142,7 @@ _shoco_ works for me – but I'd have only tested it on x86_64 Linux. Feedback o
 Saying Thanks
 -------------
 
-If you use _shoco_, or like it for whatever reason, I'd really love to hear from you! Please consider supporting me financially via
+If you use _shoco_, or like it for whatever reason, I'd really love to hear from you! Also, please consider supporting me financially via
 [git tip](https://www.gittip.com/Ed-von-Schleck/) or [flattr](https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://github.com/Ed-von-Schleck/&title=shoco&language=C&tags=github&category=software).
 
 License
