@@ -150,7 +150,7 @@ If you use _shoco_, or like it for whatever reason, I'd really love to hear from
 License
 -------
 
-_shoco_ is published under the MIT license; see the LICENSE file for details.
+_shoco_ is published under the MIT license; see the [LICENSE](LICENSE) file for details.
 
 Authors
 -------
