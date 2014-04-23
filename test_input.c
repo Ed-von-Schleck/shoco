@@ -25,7 +25,7 @@ int main(int argc, char ** argv) {
   int count = 0;
   double ratios = 0;
   double rat = 0;
-  int inlen, complen;
+  int inlen, complen, outlen;
 
   while (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
     char *end = strchr(buffer, '\n');
@@ -36,7 +36,7 @@ int main(int argc, char ** argv) {
 
     inlen = strlen(buffer);
     complen = shoco_compress(buffer, 0, comp, BUFFER_SIZE);
-    shoco_decompress(comp, complen, out, BUFFER_SIZE);
+    outlen = shoco_decompress(comp, complen, out, BUFFER_SIZE);
     rat = ratio(inlen, complen);
     if (complen != 0) {
       ++count;
@@ -45,6 +45,7 @@ int main(int argc, char ** argv) {
     if ((argc > 1) && ((strcmp(argv[1], "-v") == 0) || (strcmp(argv[1], "--verbose") == 0))) {
       print(buffer, rat);
     }
+    assert(inlen == outlen);
     assert(strcmp(buffer, out) == 0);
   }
   printf("Number of compressed strings: %d, average compression ratio: %d%%\n", count, percent(ratios / count));

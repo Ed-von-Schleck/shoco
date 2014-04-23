@@ -182,9 +182,12 @@ size_t shoco_decompress(const char * const restrict original, size_t complen, ch
       if (o + packs[mark].bytes_unpacked > out_end)
         return bufsize + 1;
 
-      // It's OK if we're past the end here
-      // we'll never read unneeded values
-      code.word = swap(*(uint32_t *)in);
+      // This should be OK as well, but it fails with emscripten.
+      // Test this with new versions of emcc.
+      //code.word = swap(*(uint32_t *)in);
+      for (int i = 0; i < packs[mark].bytes_packed; ++i)
+        code.bytes[i] = in[i];
+      code.word = swap(code.word);
 
       // unpack the leading char
       offset = packs[mark].offsets[0];
