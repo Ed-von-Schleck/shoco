@@ -29,7 +29,7 @@
 
 #include "shoco.h"
 #define _SHOCO_INTERNAL
-#include "shoco_table.h"
+#include "shoco_model.h"
 
 static inline int decode_header(unsigned char val) {
   int i = -1;

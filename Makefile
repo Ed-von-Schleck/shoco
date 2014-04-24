@@ -1,11 +1,11 @@
 FLAGS=$(CFLAGS) -std=c99 -O3 -Wall
 SOURCES=shoco.c
 OBJECTS=$(SOURCES:.c=.o)
-HEADERS=shoco.h shoco_table.h
-GENERATOR=generate_successor_table.py
+HEADERS=shoco.h shoco_model.h
+GENERATOR=generate_compressor_model.py
 TRAINING_DATA_DIR=training_data
 TRAINING_DATA=$(wildcard training_data/*.txt)
-TABLES_DIR=tables
+TABLES_DIR=models
 TABLES=$(TABLES_DIR)/text_en.h $(TABLES_DIR)/words_en.h $(TABLES_DIR)/filepaths.h
 
 .PHONY: all
@@ -20,7 +20,7 @@ test_input: test_input.o $(OBJECTS) $(HEADERS)
 $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) $(FLAGS) $< -c
 
-shoco_table.h: $(TABLES_DIR)/words_en.h
+shoco_model.h: $(TABLES_DIR)/words_en.h
 	cp $< $@
 
 .PHONY: tables
@@ -37,7 +37,7 @@ $(TABLES_DIR)/dictionary.h: /usr/share/dict/words $(GENERATOR)
 
 # Warning: This is *slow*! Use pypy when possible
 $(TABLES_DIR)/filepaths.h: $(GENERATOR)
-	find / -print 2>/dev/null | python $(GENERATOR) --optimize-encoding -o $@
+	find / -print 2>/dev/null | pypy $(GENERATOR) --optimize-encoding -o $@
 
 .PHONY: check
 check: tests
