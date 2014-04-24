@@ -33,13 +33,13 @@ Generating Tables
 
 It's easy to generate tables suited for your kind of data: _shoco_ comes with a script that takes your training data (one or more files, or stdin if none are provided), and outputs a header file suitable as a replacement for the included `shoco_table.h`. An example that trains against a dictionary (btw., not the best kind of training data, because it's dominated by uncommon words):
 
-```
+```bash
 $ ./generate_successor_table.py /usr/share/dict/words -o shoco_table.h
 ```
 
 There are options on how to chunk and strip the input data – for example, if we want to train _shoco_ with the words in this readme, but without punctuation and whitespace, we could do
 
-```
+```bash
 ./generate_successor_table.py README.md --split=whitespace --strip=punctuation
 ```
 
@@ -124,15 +124,28 @@ compressed size    | 3,393,975 | 1,476,083 | 1,229,980
 
 This demonstates quite clearly that _shoco_'s compression rate sucks, but also that it's _very_ fast.
 
+Useful Tools
+------------
+
+As to give an example on how to include _shoco_ into your project, a Makefile is provided that rebuilds the table file with `make shoco_table.h` when the training data or the table generated script changes. It should be easy to adapt it for your project.
+
+When executing `make tables` _shoco_ build some more tables, including a table for all filepaths found on your system. This can take very long; use pypy and a fast computer.
+
+Besides the aforementioned `shoco` command line tool (built with `make` or `make shoco`), you can run the tests with `make check` or build a command line testing program called `test_input`, that takes input from stdin and compresses and decompresses it line for line. It also checks that the decompressed string is exactly the input string. The `-v` option gives more verbose output, reporting stats of every compressed line. It can be used to benchmark _shoco_. Example usage:
+
+```bash
+$ time ./test_input < /usr/share/dict/words 
+```
+
 Use Cases
 ----------
 
-As of now, there are no known uses of _shoco_ in real-life projects. If you do use _shoco_, I would love to hear about it! Possible use cases might include i18n tools like gettext (strings appearing in GUIs tend to be rather short, and should compress quite well), or transfering short messages over a slow network (Twitter?), especially if the cpus on either side are too undepowered to run full-blown compressors (like embedded devices sometimes are).
+As of now, there are no known uses of _shoco_ in real-life projects. If you do use _shoco_, I would love to hear about it! Possible use cases might include i18n tools like gettext (strings appearing in GUIs tend to be rather short, and should compress quite well), or transfering short messages over a slow network (Twitter?), especially if the cpus on either side are too undepowered to run full-blown compressors (like some tiny embedded devices).
 
 To Do
 -----
 
-_shoco_ is stable, and it works well – but I'd have only tested it with gcc on x86_64 Linux. Feedback on how it runs on other OSes, compilers and architectures would be highly appreciated! If it fails, it's a bug (and given the size of the project, it should be easy to fix). Other than that, there's a few issues that could stand some improvements:
+_shoco_ is stable, and it works well – but I'd have only tested it with gcc/clang on x86_64 Linux. Feedback on how it runs on other OSes, compilers and architectures would be highly appreciated! If it fails, it's a bug (and given the size of the project, it should be easy to fix). Other than that, there's a few issues that could stand some improvements:
 
 * There should be more tests, because there's _never_ enough tests. Ever. Patches are very welcome!
 * Tests should include table generation. As that involves re-compilation, these should probably written as a Makefile, or in bash or Python (maybe using `ctypes` to call the _shoco_-functions directly).
