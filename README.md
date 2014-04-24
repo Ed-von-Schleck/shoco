@@ -1,171 +1,191 @@
-shoco
-=====
 
-_shoco_ compresses short strings to be even smaller. It is very fast, but the most remarkable property is:  If your string is ASCII, _shoco_ guarantees that the compressed string will never be bigger than the input string. In fact, an ASCII string is proper input for the decompressor (and of course, it decompresses to the exact same string). _shoco_ comes with sane defaults, but includes the tools to train the compressor for _your_ specific type of input data. The maximum compression rate is 50%, but usually in the range of 30%-35% (although if you have _very_ special data, and trained _shoco_ accordingly, it might even be better).
+**shoco**: a fast compressor for short strings
+--------------------------------------------
 
-_shoco_'s focus lies less on maximum compression (on might want to device an arithmetic coder or something similar to achieve this), but on speed and simplicity of code. Even when compressing and decompressing millions of strings, you should not experience a noticable impact as compared to using plain strings.
+**shoco** is a C library to compress and decompress short strings. It is [very fast](#comparisons-with-other-compressors) and [easy to use](#api). The default compression model is optimized for english words, but you can [generate your own compression model](#generating-compression-models) based on *your specific* input data.
 
-Installation
-------------
+**shoco** is free software, distributed under the [MIT license](https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/LICENSE).
 
-Simply copy `shoco.c`, `shoco.h` and `shoco_table.h` over to your project. Then, include `shoco.h` to use it.
+## Quick Start
 
-The standard table is trained for optimal compression of common english words. If that isn't your typical input, you might want to copy one of the other table files from the `tables` directory and rename it to `shoco_table.h`. If none of the tables work well for you, you can use the `generate_successor_table.py` script to generate a table file that's better suited to your input (provided you have good training data). For details on table generation, see below.
+Copy [shoco.c](https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco.c), [shoco.h](https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco.h) and [shoco_model.h](https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco_model.h) from [github/shoco](https://github.com/Ed-von-Schleck/shoco) over to your project. Include `shoco.h` and you are ready to use the [API](#api)!
 
-API
----
+### API
+
+Here is all of it:
 
 ```C
 size_t shoco_compress(const char * const in, size_t len, char * const out, size_t bufsize);
 size_t shoco_decompress(const char * const in, size_t len, char * const out, size_t bufsize);
 ```
 
-That's it. If the `len` argument for `shoco_compress` is 0, the input char is assumed to be `\0`-terminated. If it's a positive integer, parsing the input will stop after this length, or at a `\0`-char, whatever comes first. `shoco_decompress` however will need a positive integer for `len` (most likely you should pass the return value of `shoco_compress`).
+If the `len` argument for `shoco_compress` is 0, the input char is assumed to be null-terminated. If it’s a positive integer, parsing the input will stop after this length, or at a null-char, whatever comes first. `shoco_decompress` however will need a positive integer for `len` (most likely you should pass the return value of `shoco_compress`).
 
-The return value is the number of bytes written. If it is less than `bufsize`, all is well. In case of decompression, a `\0`-terminator is written. If the return value is exactly `bufsize`, the output is all there, but _not_ `\0`-terminated. It is up to you to decide if that's an error or not. If the buffer is not large enough for the output, the return value will be `bufsize` + 1. You might want to allocate a bigger output buffer. The compressed string will never be `\0`-terminated.
+The return value is the number of bytes written. If it is less than `bufsize`, all is well. In case of decompression, a null-terminator is written. If the return value is exactly `bufsize`, the output is all there, but _not_ null-terminated. It is up to you to decide if that’s an error or not. If the buffer is not large enough for the output, the return value will be `bufsize` + 1. You might want to allocate a bigger output buffer. The compressed string will never be null-terminated.
 
-If you are sure that the input data is plain ASCII, your `out` buffer for `shoco_compress` only needs to be as large as the input string. Otherwise, the output buffer may need to be up to 2x as large as the input, if it's a 1-byte encoding, or even larger for multi-byte encodings like UTF-8.
+If you are sure that the input data is plain ASCII, your `out` buffer for `shoco_compress` only needs to be as large as the input string. Otherwise, the output buffer may need to be up to 2x as large as the input, if it’s a 1-byte encoding, or even larger for multi-byte or variable-width encodings like UTF-8.
 
 For the standard values of _shoco_, maximum compression is 50%, so the `out` buffer for `shoco_decompress` needs to be a maximum of twice the size of the compressed string.
 
-Generating Tables
------------------
+## How It Works
 
-It's easy to generate tables suited for your kind of data: _shoco_ comes with a script that takes your training data (one or more files, or stdin if none are provided), and outputs a header file suitable as a replacement for the included `shoco_table.h`. An example that trains against a dictionary (btw., not the best kind of training data, because it's dominated by uncommon words):
-
-```bash
-$ ./generate_successor_table.py /usr/share/dict/words -o shoco_table.h
-```
-
-There are options on how to chunk and strip the input data – for example, if we want to train _shoco_ with the words in this readme, but without punctuation and whitespace, we could do
+Have you ever tried compressing the string “hello world” with **gzip**? Let’s do it now:
 
 ```bash
-./generate_successor_table.py README.md --split=whitespace --strip=punctuation
+$ echo "hello world" | gzip -c | wc -c
+32
 ```
 
-Since we haven't specified an output file, the resulting table file is printed on stdout.
+So the output is actually *larger* than the input string. And **gzip** is quite good with short input: **xz** produces an output size of 68 bytes. Of course, compressing short strings is not what they are made for, because you rarely need to make small strings even smaller – except when you do. That’s why **shoco** was written.
 
-`generate_successor_table.py --help` prints a friendly help message:
+**shoco** works best if your input is ASCII. In fact, the most remarkable property of **shoco** is that the compressed size will *never* exceed the size of your input string, provided it is plain ASCII. What is more: An ASCII string is suitable input for the decompressor (which will return the exact same string, of course). That property comes at a cost, however: If your input string is not entirely (or mostly) ASCII, the output may grow. For some inputs, it can grow quite a lot. That is especially true for multibyte encodings such as UTF-8. Latin-1 and comparable encodings fare better, but will still increase your output size, if you don’t happen to hit a common character. Why is that so?
 
-```
-usage: generate_successor_table.py [-h] [-o OUTPUT]
-                                   [--split {newline,whitespace,none}]
-                                   [--strip {whitespace,punctuation,none}]
-                                   [--max-leading-char-bits MAX_LEADING_CHAR_BITS]
-                                   [--max-successor-bits MAX_SUCCESSOR_BITS]
-                                   [--encoding-types {1,2,3}]
-                                   [--optimize-encoding]
-                                   [file [file ...]]
+In every language, some characters are used more often than others. English is no exception to this rule. So if one simply makes a list of the, say, sixteen most common characters, four bits would be sufficient to refer to them (as opposed to eight bits – one byte – used by ASCII). But what if the input string includes an uncommon character, that is not in this list? Here’s the trick: We use the first bit of a `char` to indicate if the following bits refer to a short common character index, or a normal ASCII byte. Since the first bit in plain ASCII is always 0, setting the first bit to 1 says “the next bits represent short indices for common chars”. But what if our character is not ASCII (meaning the first bit of the input `char` is not 0)? Then we insert a marker that says “copy the next byte over as-is”, and we’re done. That explains the growth for non-ASCII characters: This marker takes up a byte, doubling the effective size of the character.
 
-Generate a succession table for 'shoco'.
+How **shoco** actually marks these packed representations is a bit more complicated than that (e.g., we also need to specify *how many* packed characters follow, so a single leading bit won’t be sufficient), but the principle still holds.
 
-positional arguments:
-  file                  The training data file(s). If no input file is
-                        specified, the input is read from STDIN.
+But **shoco** is a bit smarter than just to abbreviate characters based on absolute frequency – languages have more regularities than that. Some characters are more likely to be encountered next to others; the canonical example would be **q**, that’s *almost always* followed by a **u**. In english, *the*, *she*, *he*, *then* are all very common words – and all have a **h** followed by a **e**. So if we’d assemble a list of common characters *following common characters*, we can do with even less bits to represent these *successor* characters, and still have a good hit rate. That’s the idea of **shoco**: Provide short representations of characters based on the previous character.
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -o OUTPUT, --output OUTPUT
-                        Output file for the resulting succession table.
-  --split {newline,whitespace,none}
-                        Split the input into chunks at this separator.
-                        Default: newline
-  --strip {whitespace,punctuation,none}
-                        Remove leading and trailing characters from each
-                        chunk. Default: whitespace
+This does not allow for optimal compression – by far. But if one carefully aligns the representation packs to byte boundaries, and uses the ASCII-first-bit-trick above to encode the indices, it works well enough. Moreover, it is blazingly fast. You wouldn’t want to use **shoco** for strings larger than, say, a hundred bytes, because then the overhead of a full-blown compressor like **gzip** begins to be dwarfed by the advantages of the much more efficient algorithms it uses.
 
-table and encoding generation arguments:
-  Higher values may provide for better compression ratios, but will make
-  compression/decompression slower. Likewise, lower numbers make
-  compression/decompression faster, but will likely make hurt the
-  compression ratio. The default values are mostly a good compromise.
+If one would want to classify **shoco**, it would be an [entropy encoder](http://en.wikipedia.org/wiki/Entropy_encoding), because the length of the representation of a character is determined by the probability of encountering it in a given input string. That’s opposed to [dictionary coders](http://en.wikipedia.org/wiki/Dictionary_coder) that maintain a dictionary of common substrings. An optimal compression for short strings could probably be achieved using an [arithmetic coder](http://en.wikipedia.org/wiki/Arithmetic_coding) (also a type of entropy encoder), but most likely one could not achieve the same kind of performance that **shoco** delivers.
 
-  --max-leading-char-bits MAX_LEADING_CHAR_BITS
-                        The maximum amount of bits that may be used for
-                        representing a leading character. Default: 5
-  --max-successor-bits MAX_SUCCESSOR_BITS
-                        The maximum amount of bits that may be used for
-                        representing a successor character. Default: 4
-  --encoding-types {1,2,3}
-                        The number of different encoding schemes. If your
-                        input strings are very short, consider lower values.
-                        Default: 3
-  --optimize-encoding   Find the optimal packing structure for the training
-                        data. This rarely leads to different results than the
-                        default values, and it is *slow*. Use it for very
-                        unusual input strings, or when you use non-default
-                        table generation arguments.
+How does **shoco** get the information about character freqencies? They are not pulled out of thin air, but instead generated by analyzing text with a relatively simple script. It counts all *bigrams* – two successive characters – in the text and orders them by frequency. If wished for, it also tests for best encodings (like: Is it better to spend more bits on the leading character or on the successor character?), and then outputs its findings as a header file for `shoco.c` to include. That means the statistical model is compiled in; we simply can’t add it to the compressed string without blowing it out of proportions (and defeating the whole purpose of this exercise). This script is shipped with **shoco**, and the [next section](#generating-compression-models) is about how *you* can use it to generate a model that’s optimized for *your* kind of data. Just remember that, with **shoco**, you need to control both ends of the chain (compression **and** decompression), because you can’t decompress data correctly if you’re not sure that the compressor has used the same model.
+
+## Generating Compression Models
+
+Maybe your typical input isn’t english words. Maybe it’s german or french – or whole sentences. Or file system paths. Or URLs. While the standard compression model of **shoco** should work for all of these, it might be worthwile to train **shoco** for this specific type of input data.
+
+Fortunately, that’s really easy: **shoco** includes a python script called `generate_compression_model.py` that takes one or more text files and ouputs a header file ready for **shoco** to use. Here’s an example that trains **shoco** with a dictionary (btw., not the best kind of training data, because it’s dominated by uncommon words):
+
+```bash
+$ ./generate_successor_table.py /usr/share/dict/words -o shoco_model.h
 ```
 
-Since generating tables can be slow if your input data is large, and _especially_ so if you use the `--otimize-encoding` option, using [pypy](http://pypy.org/) can significantly speed up the process. 
+There are options on how to chunk and strip the input data – for example, if we want to train **shoco** with the words in a readme file, but without punctuation and whitespace, we could do
 
-Comparison With Other Compressors
----------------------------------
+```bash
+$ ./generate_successor_table.py --split=whitespace --strip=punctuation README.md
+```
 
-### smaz ###
+Since we haven’t specified an output file, the resulting table file is printed on stdout.
 
-There's another good small string compressor out there: [smaz](https://github.com/antirez/smaz). Smaz seems to be dictionary based, while _shoco_ is an entropy encoder. As a result, smaz will often do better than _shoco_ when compressing common english terms. However, _shoco_ typically beats smaz for more obscure input, as long as it's ASCII. Smaz may enlarge your string for uncommon words (like numbers), _shoco_ will never do that for ASCII strings.
+This is most likely all you’ll need to generate a good model, but if you are adventurous, you might want to play around with all the options of the script: Type `generate_compression_model.py --help` to get a friendly help message. We won’t dive into the details here, though – just one word of warning: Generating tables can be slow if your input data is large, and _especially_ so if you use the `--optimize-encoding` option. Using [pypy](http://pypy.org/) can significantly speed up the process.
 
-Performance-wise, _shoco_ is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in `/usr/dict/share/words` with _smaz_ takes around 0.325s on my computer and compresses on average by 28%, while _shoco_ has a compression average of 33% (with the standard table; an optimized table will be even better) and takes around 0.140s. _shoco_ is _especially_ fast at decompression.
+## Comparisons With Other Compressors
 
-_shoco_ can be trained with user data, while _smaz_'s dictionary is built-in. That said, the maximum compression rate of _smaz_ is hard to reach for _shoco_, so depending on your input type, you might fare better with _smaz_ (there's no way around it: You have to measure it yourself).
+### smaz
 
-### gzip, xz ###
+There’s another good small string compressor out there: [**smaz**](https://github.com/antirez/**smaz**). **smaz** seems to be dictionary based, while **shoco** is an entropy encoder. As a result, **smaz** will often do better than **shoco** when compressing common english terms. However, **shoco** typically beats **smaz** for more obscure input, as long as it’s ASCII. Smaz may enlarge your string for uncommon words (like numbers), **shoco** will never do that for ASCII strings.
 
-_shoco_'s compression ratio can't (and doesn't want to) compete with gzip et al. for string sizes bigger than, say, a hundred bytes or so. But for strings up to that size, _shoco_ is a good contender, and for very very small strings, it will always be better than standard compressors.
+Performance-wise, **shoco** is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in `/usr/dict/share/words` with **smaz** takes around 0.325s on my computer and compresses on average by 28%, while **shoco** has a compression average of 33% (with the standard table; an optimized table will be even better) and takes around 0.145s. **shoco** is _especially_ fast at decompression.
 
-The performance of _shoco_ should always be several times faster than about any standard compression tool. For testing purposes, there's a binary called `shoco` included that compresses and decompresses single files. The following timings were made with this command line tool. The data is `/usr/share/dict/words` (size: 4,953,680), compressing it as a whole (not a strong point of _shoco_):
+**shoco** can be trained with user data, while **smaz**’s dictionary is built-in. That said, the maximum compression rate of **smaz** is hard to reach for **shoco**, so depending on your input type, you might fare better with **smaz** (there’s no way around it: You have to measure it yourself).
 
-                   | shoco     | gzip      | xz
--------------------|-----------|-----------|-------
-compression time   | 0.070s    | 0.470s    | 3.300s
-decompression time | 0.010s    | 0.048s    | 0.148s
-compressed size    | 3,393,975 | 1,476,083 | 1,229,980
+### gzip, xz
 
-This demonstates quite clearly that _shoco_'s compression rate sucks, but also that it's _very_ fast.
+As mentioned, **shoco**’s compression ratio can’t (and doesn’t want to) compete with gzip et al. for strings larger than a few bytes. But for very small strings, it will always be better than standard compressors.
 
-Useful Tools
-------------
+The performance of **shoco** should always be several times faster than about any standard compression tool. For testing purposes, there’s a binary (unsurprisingly called `shoco`) included that compresses and decompresses single files. The following timings were made with this command line tool. The data is `/usr/share/dict/words` (size: 4,953,680), compressing it as a whole (not a strong point of **shoco**):
 
-As to give an example on how to include _shoco_ into your project, a Makefile is provided that rebuilds the table file with `make shoco_table.h` when the training data or the table generated script changes. It should be easy to adapt it for your project.
+compressor | compression time | decompression time | compressed size
+-----------|------------------|--------------------|----------------
+shoco      | 0.070s           | 0.010s             | 3,393,975
+gzip       | 0.470s           | 0.048s             | 1,476,083
+xz         | 3.300s           | 0.148s             | 1,229,980
 
-When executing `make tables` _shoco_ build some more tables, including a table for all filepaths found on your system. This can take very long; use pypy and a fast computer.
+This demonstates quite clearly that **shoco**’s compression rate sucks, but also that it’s _very_ fast.
 
-Besides the aforementioned `shoco` command line tool (built with `make` or `make shoco`), you can run the tests with `make check` or build a command line testing program called `test_input`, that takes input from stdin and compresses and decompresses it line for line. It also checks that the decompressed string is exactly the input string. The `-v` option gives more verbose output, reporting stats of every compressed line. It can be used to benchmark _shoco_. Example usage:
+## Javascript Version
+
+For showing off, **shoco** ships with a Javascript version (`shoco.js`) that’s generated with [emscripten](https://github.com/kripken/emscripten). If you change the default compression model, you need to re-generate it by typing `make js`. You do need to have emscripten installed. The output is [asm.js](http://asmjs.org/) with a small shim to provide a convenient API:
+
+```js
+compressed = shoco.compress(input_string);
+output_string = shoco.decompress(compressed);
+```
+
+The compressed string is really a [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/API/Uint8Array), since that resembles a C string more closely. The Javascript version is not as furiously fast as the C version because there’s dynamic (heap) memory allocation involved, but I guess there’s no way around it.
+
+`shoco.js` should be usable as a node.js module.
+
+## Tools And Other Included Extras
+
+Most of them have been mentioned already, but for completeness sake: Let’s have a quick overview over what you’ll find in the repo:
+
+#### `shoco.c`, `shoco.h`, `shoco_model.h`
+
+The heart of the project. If you don’t want to bother with nitty-gritty details, and the compression works for you, it’s all you’ll ever need.
+
+#### `models/*`
+
+As examples, there are more models included. Feel free to use one of them instead of the default model: Just copy it over `shoco_model.h` and you’re all set. Re-build them with `make models`.
+
+#### `training_data/*`
+
+Some books from [Project Gutenberg](http://www.gutenberg.org/ebooks/) used for generating the default model.
+
+#### `shoco.js`
+
+Javascript library, generated by **emscripten**. Also usable as a [node.js](http://nodejs.org/) module (put it in `node_modules` and `require` it). Re-build with `make js`.
+
+#### `shoco.html`
+
+A example of how to use `shoco.js` in a website.
+
+#### `shoco`
+
+A testing tool for compressing and decompressing files. Build it with `make shoco` or just `make`. Use it like this:
+
+```bash
+$ shoco compress file-to-compress.txt compressed-file.shoco
+$ shoco decompress compressed-file.shoco decompressed-file.txt
+```
+
+It’s not meant for production use, because I can’t image why one would want to use **shoco** on entire files.
+
+#### `test_input`
+
+Another testing tool for compressing and decompressing every line in the input file. Build it with `make test_input`. Usage example:
 
 ```bash
 $ time ./test_input < /usr/share/dict/words 
+Number of compressed strings: 479828, average compression ratio: 33%
+
+real   0m0.158s
+user   0m0.145s
+sys    0m0.013s
 ```
 
-Use Cases
-----------
+Adding the command line switch `-v` gives line-by-line information about the compression ratios.
 
-As of now, there are no known uses of _shoco_ in real-life projects. If you do use _shoco_, I would love to hear about it! Possible use cases might include i18n tools like gettext (strings appearing in GUIs tend to be rather short, and should compress quite well), or transfering short messages over a slow network (Twitter?), especially if the cpus on either side are too undepowered to run full-blown compressors (like some tiny embedded devices).
+#### `Makefile`
 
-To Do
------
+It’s not the cleanest or l33test Makefile ever, but it should give you hints for integrating **shoco** into your project.
 
-_shoco_ is stable, and it works well – but I'd have only tested it with gcc/clang on x86_64 Linux. Feedback on how it runs on other OSes, compilers and architectures would be highly appreciated! If it fails, it's a bug (and given the size of the project, it should be easy to fix). Other than that, there's a few issues that could stand some improvements:
+#### `tests`
 
-* There should be more tests, because there's _never_ enough tests. Ever. Patches are very welcome!
-* Tests should include table generation. As that involves re-compilation, these should probably written as a Makefile, or in bash or Python (maybe using `ctypes` to call the _shoco_-functions directly).
-* The Python script for table generation should see some clean-up, as well as documentation. Also it should utilize all cpu cores (presumably via the `multiprocess`-module). This is a good task for new contributers!
-* Again for table generation: Investigate why _pypy_ isn't as fast as should be expected ([jitviewer](https://bitbucket.org/pypy/jitviewer/) might be of help here).
-* Generate Javascript code with emscripten, so that _shoco_ can be used with web services.
+Invoke them with `make check`. They should pass.
+
+## Things Still To Do
+
+**shoco** is stable, and it works well – but I’d have only tested it with gcc/clang on x86_64 Linux. Feedback on how it runs on other OSes, compilers and architectures would be highly appreciated! If it fails, it’s a bug (and given the size of the project, it should be easy to fix). Other than that, there’s a few issues that could stand some improvements:
+
+* There should be more tests, because there’s _never_ enough tests. Ever. Patches are very welcome!
+* Tests should include model generation. As that involves re-compilation, these should probably written as a Makefile, or in bash or Python (maybe using `ctypes` to call the **shoco**-functions directly).
+* The Python script for model generation should see some clean-up, as well as documentation. Also it should utilize all cpu cores (presumably via the `multiprocess`-module). This is a good task for new contributers!
+* Again for model generation: Investigate why **pypy** isn’t as fast as should be expected ([jitviewer](https://bitbucket.org/pypy/jitviewer/) might be of help here).
+* Make a real **node.js** module.
 * The current SSE2 optimization is probably not optimal. Anyone who loves to tinker with these kinds of micro-optimizations is invited to try his or her hand here.
+* Publishing/packaging it as a real library probably doesn’t make much sense, as the model is compiled-in, but maybe we should be making it easier to use **shoco** as a git submodule (even if it’s just about adding documentation), or finding other ways to avoid the copy&paste installation.
 
-Feedback
---------
+## Feedback
 
-If you use _shoco_, or like it for whatever reason, I'd really love to hear from you! Also, a nice way of saying thanks is to support me financially via
+If you use **shoco**, or like it for whatever reason, I’d really love to [hear from you](mailto:christian.h.m.schramm at gmail.com (replace the 'at' with @ and delete this sentence))! If wished for, I can provide integration with **shoco** for your services (at a price, of course). Also, a nice way of saying thanks is to support me financially via
 [git tip](https://www.gittip.com/Ed-von-Schleck/) or [flattr](https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://github.com/Ed-von-Schleck/&title=shoco&language=C&tags=github&category=software).
 
-License
--------
+If you find a bug, or have a feature request, [file it](https://github.com/Ed-von-Schleck/shoco/issues/new)! If you have a question about usage or internals of **shoco**, ask it on [stackoverflow](https://stackoverflow.com/questions/ask) for good exposure – and write me a mail, so that I don’t miss it.
 
-_shoco_ is published under the MIT license; see the [LICENSE](LICENSE) file for details.
+## Authors
 
-Authors
--------
-
-_shoco_ is written by Christian Schramm.
+**shoco** is written by [Christian Schramm](mailto:christian.h.m.schramm at gmail.com (replace the 'at' with @ and delete this sentence)).
