@@ -20,10 +20,10 @@ body
 body,input,textarea,select
 {
   font-family: 'Source Sans Pro', sans-serif;
-  font-size: 19pt;
+  font-size: 18pt;
   font-weight: 300;
   line-height: 1.75em;
-  color: #888;
+  color: #444;
   -webkit-text-stroke: 0.15px;
 }
 
@@ -51,18 +51,6 @@ h2
   letter-spacing: -1px;
 }
 
-h2.alt
-{
-  color: #888;
-  color: #FFEDD9;
-}
-
-h2.alt strong
-{
-  color: #666;
-  color: #F5FACF;
-}
-
 h3
 {
   font-size: 1.5em;
@@ -80,8 +68,8 @@ footer
 
 strong, b
 {
-  font-weight: 300;
-  color: #666;
+  font-weight: 400;
+  color: #333;
 }
 
 em, i
@@ -104,7 +92,7 @@ a
 
 a:hover
 {
-  color: #E27689;
+  color: #502D28;
   border-bottom-color: rgba(255,255,255,0);
 }
 
@@ -923,8 +911,7 @@ table.default tbody
   width: 375px;
   height: 100%;
   color: #fff;
-  background: #222729 url('images/overlay.png');
-  background: #472F2C url('images/overlay.png');
+  background: #502D28 url('images/overlay.png');
   box-shadow: inset -0.25em 0 0.25em 0 rgba(0,0,0,0.125);
   text-align: right;
 }
@@ -1069,7 +1056,7 @@ table.default tbody
 {
   margin-left: 375px;
   text-align: center;
-  background-color: #dce3e2;
+  background-color: black;
   padding: 3em 0 4em 0;
   box-shadow: inset 0 1px 0 0 rgba(0,0,0,0.05), inset 0 0.1em 0.1em 0 rgba(0,0,0,0.025);
   font-size: 0.8em;
@@ -1104,14 +1091,43 @@ table.default tbody
   margin: 0;
   overflow: hidden;
   padding: 3em 0 4em 0;
-  box-shadow: inset 0 1px 0 0 rgba(0,0,0,0.05), inset 0 0.1em 0.1em 0 rgba(0,0,0,0.025);
-  text-align: center;
+  box-shadow: inset 0 1px 0 0 rgba(0,0,0,0.05), inset 0 0.1em 0.1em 0 rgba(0,0,0,0.025), inset 0 -0.1em 0.1em 0 rgba(255,255,255,0.025);
+  text-align: justify;
   background-image: url('images/overlay.png');
 }
 
 #main > section.one
 {
-  background: #6E3F19
+  background: #AB7355;
+  color: #333;
+  text-align: center;
+  box-shadow: inset 0 0 7em rgba(0, 0, 0, 0.3);
+  font-size: 20pt;
+}
+
+#main > section.one strong
+{
+  color: #F5FACF;
+}
+
+#main > section.one h2
+{
+  color: #FFEDD9;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+#main > section.one .testbox
+{
+  background: #502D28;
+  color: #E6C197;
+  padding: 1em 1em 2em 1em;
+  border-radius: 0.35em;
+  box-shadow: inset 0 0.1em 0.1em 0 rgba(0,0,0,0.05);
+}
+
+#ratio_div
+{
+  font-size: 300%;
 }
 
 #main > section.one .image.featured
@@ -1119,17 +1135,67 @@ table.default tbody
   margin-bottom: 3em;
 }
 
-#main > section.two
+#main > section.odd
 {
-  background-color: #f5fafa;
+  background-color: #FFEDD9;
 }
 
-#main > section.three
+
+#main > section.even
 {
-  background-color: #ecf1f1;
+  background-color: #FFEAD1;
 }
 
-#main > section.four
+code
 {
-  background-color: #e8edec;
+  font-family: monospace;
+  font-weight: 400;
+}
+
+pre
+{
+  border-top: solid 2px rgba(0,0,0,0.5);
+  border-bottom: solid 2px rgba(0,0,0,0.5);
+  background: #fffaf8;
+  padding: 0.1em 0.5em;
+  margin-bottom: 1em;
+  font-family: monospace;
+  font-size: 80%;
+  line-height: 1.5em;
+  box-shadow: inset 0 0 1em 0 rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+#main table
+{
+  width: auto;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+#main td, #main th
+{
+  padding: 0 1em;
+}
+#main td:first-of-type, #main th:first-of-type
+{
+  font-weight: 400;
+  text-align: right;
+  border-right: solid 2px rgba(0,0,0,0.5);
+}
+#main td:last-of-type, #main th:last-of-type
+{
+}
+
+#main thead
+{
+  font-weight: 400;
+}
+
+#main tbody
+{
+  border-top: solid 2px rgba(0,0,0,0.5);
+}
+#main tbody tr
+{
 }
