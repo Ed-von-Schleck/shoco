@@ -23,7 +23,11 @@ if __name__ == "__main__":
     html["licence_description"] = """<strong>shoco</strong> is free software, distributed
     under the MIT license."""
     html["github_url"] = "https://github.com/Ed-von-Schleck/shoco"
-    html["github_invitation"] = "html on github"
+    html["gittip_url"] = "https://www.gittip.com/Ed-von-Schleck/"
+    html["flattr_url"] = "https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://github.com/Ed-von-Schleck/&title=shoco&language=C&tags=github&category=software"
+    html["github_invitation"] = "shoco on github"
+    html["gittip_nag"] = "support me on git tip"
+    html["flattr_nag"] = "support me on flattr"
 
     html["sections"] = collections.OrderedDict()
     md["sections"] = collections.OrderedDict()

@@ -960,25 +960,38 @@ table.default tbody
   margin: 1.75em 1.5em 1.5em 1.5em;
   min-height: 48px;
   cursor: default;
+  text-align: left;
 }
 
 #logo h1
 {
   position: relative;
-  color: #fff;
-  font-weight: 600;
-  font-size: 1em;
+  color: #F5FACF;
+  font-weight: 400;
+  font-size: 150%;
   line-height: 1em;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 1), 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 #logo .byline
 {
   position: relative;
   display: block;
-  font-size: 0.6em;
+  font-size: 0.65em;
   color: rgba(255,255,255,0.5);
   line-height: 1.25em;
   margin: 0.5em 0 0 0;
+}
+
+#logo .byline:hover
+{
+  color: white;
+  -moz-transition: color 0.35s ease-in-out, border-bottom-color 0.35s ease-in-out;
+  -webkit-transition: color 0.35s ease-in-out, border-bottom-color 0.35s ease-in-out;
+  -o-transition: color 0.35s ease-in-out, border-bottom-color 0.35s ease-in-out;
+  -ms-transition: color 0.35s ease-in-out, border-bottom-color 0.35s ease-in-out;
+  transition: color 0.35s ease-in-out, border-bottom-color 0.35s ease-in-out;
+
 }
 
 #logo .image
