@@ -23,8 +23,8 @@ $(OBJECTS): %.o: %.c $(HEADERS)
 shoco_model.h: $(TABLES_DIR)/words_en.h
 	cp $< $@
 
-.PHONY: tables
-tables: $(TABLES)
+.PHONY: models
+models: $(TABLES)
 
 $(TABLES_DIR)/text_en.h: $(TRAINING_DATA) $(GENERATOR)
 	python $(GENERATOR) $(TRAINING_DATA) -o $@

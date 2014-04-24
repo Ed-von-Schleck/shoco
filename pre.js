@@ -3,7 +3,7 @@ var Module = {
     var _shoco_compress = Module['cwrap']('shoco_compress', 'number', ['string', 'number', 'number', 'number']);
     var _shoco_decompress = Module['cwrap']('shoco_decompress', 'number', ['number', 'number', 'number', 'number']);
 
-    window['shoco'] = {
+    var shoco = {
       'compress': function(str_in) {
         var out_heap = Module['_malloc'](str_in.length * 8);
         var out_buffer = new Uint8Array(Module['HEAPU8']['buffer'], out_heap, str_in.length * 8);
@@ -31,8 +31,11 @@ var Module = {
       }
     }
 
-    // node.js integration
+    // node.js
     if (typeof module !== "undefined")
-      module.exports = window['shoco'];
+      module.exports = shoco;
+    // browser
+    else
+      window['shoco'] = shoco;
   }
 };
