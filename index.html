@@ -222,7 +222,7 @@ window.onload = function() {
 <p><strong>shoco</strong> can be trained with user data, while <strong>smaz</strong>’s dictionary is built-in. That said, the maximum compression rate of <strong>smaz</strong> is hard to reach for <strong>shoco</strong>, so depending on your input type, you might fare better with <strong>smaz</strong> (there’s no way around it: You have to measure it yourself).</p>
 <h3>gzip, xz</h3>
 <p>As mentioned, <strong>shoco</strong>’s compression ratio can’t (and doesn’t want to) compete with gzip et al. for strings larger than a few bytes. But for very small strings, it will always be better than standard compressors.</p>
-<p>The performance of <strong>shoco</strong> should always be several times faster than about any standard compression tool. For testing purposes, there’s a binary (unsurprisingly called <code>shoco</code>) included that compresses and decompresses single files. The following timings were made with this command line tool. The data is <code>/usr/share/dict/words</code> (size: 4,953,680), compressing it as a whole (not a strong point of <strong>shoco</strong>):</p>
+<p>The performance of <strong>shoco</strong> should always be several times faster than about any standard compression tool. For testing purposes, there’s a binary inlcuded (unsurprisingly called <code>shoco</code>) that compresses and decompresses single files. The following timings were made with this command line tool. The data is <code>/usr/share/dict/words</code> (size: 4,953,680), compressing it as a whole (not a strong point of <strong>shoco</strong>):</p>
 <table>
 <thead>
 <tr>
@@ -282,7 +282,7 @@ window.onload = function() {
         <h2>Tools And Other Included Extras</h2>
       </header>
 
-      <p>Most of them have been mentioned already, but for completeness sake: Let’s have a quick overview over what you’ll find in the repo:</p>
+      <p>Most of them have been mentioned already, but for completeness sake – let’s have a quick overview over what you’ll find in the repo:</p>
 <h4><code>shoco.c</code>, <code>shoco.h</code>, <code>shoco_model.h</code></h4>
 <p>The heart of the project. If you don’t want to bother with nitty-gritty details, and the compression works for you, it’s all you’ll ever need.</p>
 <h4><code>models/*</code></h4>

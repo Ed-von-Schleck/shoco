@@ -86,7 +86,7 @@ Performance-wise, **shoco** is typically faster by at least a factor of 2. As an
 
 As mentioned, **shoco**’s compression ratio can’t (and doesn’t want to) compete with gzip et al. for strings larger than a few bytes. But for very small strings, it will always be better than standard compressors.
 
-The performance of **shoco** should always be several times faster than about any standard compression tool. For testing purposes, there’s a binary (unsurprisingly called `shoco`) included that compresses and decompresses single files. The following timings were made with this command line tool. The data is `/usr/share/dict/words` (size: 4,953,680), compressing it as a whole (not a strong point of **shoco**):
+The performance of **shoco** should always be several times faster than about any standard compression tool. For testing purposes, there’s a binary inlcuded (unsurprisingly called `shoco`) that compresses and decompresses single files. The following timings were made with this command line tool. The data is `/usr/share/dict/words` (size: 4,953,680), compressing it as a whole (not a strong point of **shoco**):
 
 compressor | compression time | decompression time | compressed size
 -----------|------------------|--------------------|----------------
@@ -111,7 +111,7 @@ The compressed string is really a [Uint8Array](https://developer.mozilla.org/en-
 
 ## Tools And Other Included Extras
 
-Most of them have been mentioned already, but for completeness sake: Let’s have a quick overview over what you’ll find in the repo:
+Most of them have been mentioned already, but for completeness sake – let’s have a quick overview over what you’ll find in the repo:
 
 #### `shoco.c`, `shoco.h`, `shoco_model.h`
 
