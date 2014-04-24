@@ -908,7 +908,7 @@ table.default tbody
   position: fixed;
   top: 0;
   left: 0;
-  width: 375px;
+  width: 275px;
   height: 100%;
   color: #fff;
   background: #502D28 url('images/overlay.png');
@@ -1013,6 +1013,8 @@ table.default tbody
   -o-transition: none;
   -ms-transition: none;
   transition: none;
+  font-size: smaller;
+  line-height: 1.5em;
 }
 
 #nav ul li a span
@@ -1054,7 +1056,7 @@ table.default tbody
 
 #footer
 {
-  margin-left: 375px;
+  margin-left: 275px;
   text-align: center;
   background-color: black;
   padding: 3em 0 4em 0;
@@ -1083,7 +1085,7 @@ table.default tbody
 
 #main
 {
-  margin-left: 375px;
+  margin-left: 275px;
 }
 
 #main > section
@@ -1103,6 +1105,11 @@ table.default tbody
   text-align: center;
   box-shadow: inset 0 0 7em rgba(0, 0, 0, 0.3);
   font-size: 20pt;
+}
+
+#main > section.one a
+{
+  border-bottom: dotted 1px rgba(0,0,0,0.5);
 }
 
 #main > section.one strong
@@ -1173,18 +1180,17 @@ pre
   margin-right: auto;
   text-align: center;
 }
+
 #main td, #main th
 {
   padding: 0 1em;
 }
+
 #main td:first-of-type, #main th:first-of-type
 {
   font-weight: 400;
   text-align: right;
   border-right: solid 2px rgba(0,0,0,0.5);
-}
-#main td:last-of-type, #main th:last-of-type
-{
 }
 
 #main thead
@@ -1196,6 +1202,8 @@ pre
 {
   border-top: solid 2px rgba(0,0,0,0.5);
 }
-#main tbody tr
+
+#main ul
 {
+  list-style: disc outside;
 }

@@ -1,0 +1,5 @@
+{% for id, section in sections.items() %}
+{{ section.header }}
+
+{{ section.text }}
+{% endfor %}

@@ -3,7 +3,7 @@
 
 Maybe your typical input isn’t english words. Maybe it’s german or french – or whole sentences. Or file system paths. Or URLs. While the standard compression model of **shoco** should work for all of these, it might be worthwile to train **shoco** for this specific type of input data.
 
-Fortunately, that’s really easy. **shoco** includes a python script called `generate_compression_model.py` that takes one or more text files and ouputs a header file ready for **shoco** to use. An example that trains against a dictionary (btw., not the best kind of training data, because it’s dominated by uncommon words):
+Fortunately, that’s really easy: **shoco** includes a python script called `generate_compression_model.py` that takes one or more text files and ouputs a header file ready for **shoco** to use. Here’s an example that trains **shoco** with a dictionary (btw., not the best kind of training data, because it’s dominated by uncommon words):
 
 ```bash
 $ ./generate_successor_table.py /usr/share/dict/words -o shoco_model.h

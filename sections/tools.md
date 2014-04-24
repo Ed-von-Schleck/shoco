@@ -52,3 +52,7 @@ Adding the command line switch `-v` gives line-by-line information about the com
 #### `Makefile`
 
 It’s not the cleanest or l33test Makefile ever, but it should give you hints for integrating **shoco** into your project.
+
+#### `tests`
+
+Invoke them with `make check`. They should pass.

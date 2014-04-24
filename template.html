@@ -65,26 +65,12 @@ window.onload = function() {
         -->
       <ul>
         {% for id, section in sections.items() %}
-        <li><a href="#{{ id }}" id="{{ id }}-link" class="skel-panels-ignoreHref">{{ section.title }}</a></li>
+        <li><a href="#{{ section.anchor }}" id="{{ section.anchor }}-link" class="skel-panels-ignoreHref">{{ section.title }}</a></li>
         {% endfor %}
       </ul>
     </nav>
 
   </div>
-
-  <div class="bottom">
-
-    <!-- Social Icons -->
-    <ul class="icons">
-      <li><a href="#" class="fa fa-twitter solo"><span>Twitter</span></a></li>
-      <li><a href="#" class="fa fa-facebook solo"><span>Facebook</span></a></li>
-      <li><a href="#" class="fa fa-github solo"><span>Github</span></a></li>
-      <li><a href="#" class="fa fa-dribbble solo"><span>Dribbble</span></a></li>
-      <li><a href="#" class="fa fa-envelope solo"><span>Email</span></a></li>
-    </ul>
-
-  </div>
-
 </div>
 
 <!-- Main -->
@@ -122,7 +108,7 @@ window.onload = function() {
   </section>
 
   {% for id, section in sections.items() if not id == "home" %}
-  <section id="{{ id }}" class="{{ loop.cycle('odd', 'even') }}">
+  <section id="{{ section.anchor }}" class="{{ loop.cycle('odd', 'even') }}">
     <div class="container">
 
       <header>
@@ -140,7 +126,7 @@ window.onload = function() {
 
   <!-- Copyright -->
   <div class="copyright">
-    <p>&copy; 2013 Christian Schramm.<br>All code is published under the MIT license.<br>Everything else is published under the <a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a> license.</p>
+    <p>&copy; 2013 Christian Schramm.<br>All code is published under the <a href="https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/LICENSE">MIT license</a>.<br>Everything else is published under the <a href="http://creativecommons.org/licenses/by/3.0/">Creative Commons 3.0</a> license.</p>
     <ul class="menu">
       <li>Website design is based on <a href="http://html5up.net/prologue">Prologue by HTML5 UP</a>.</li>
     </ul>
