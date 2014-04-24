@@ -6,7 +6,7 @@ Maybe your typical input isn’t english words. Maybe it’s german or french �
 Fortunately, that’s really easy. **shoco** includes a python script called `generate_compression_model.py` that takes one or more text files and ouputs a header file ready for **shoco** to use. An example that trains against a dictionary (btw., not the best kind of training data, because it’s dominated by uncommon words):
 
 ```bash
-$ ./generate_successor_table.py /usr/share/dict/words -o shoco_table.h
+$ ./generate_successor_table.py /usr/share/dict/words -o shoco_model.h
 ```
 
 There are options on how to chunk and strip the input data – for example, if we want to train **shoco** with the words in a readme file, but without punctuation and whitespace, we could do

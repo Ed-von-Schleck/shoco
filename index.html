@@ -79,6 +79,8 @@ window.onload = function() {
         
         <li><a href="#javascript" id="javascript-link" class="skel-panels-ignoreHref">Javascript</a></li>
         
+        <li><a href="#tools" id="tools-link" class="skel-panels-ignoreHref">Tools And Extras</a></li>
+        
       </ul>
     </nav>
 
@@ -142,7 +144,7 @@ window.onload = function() {
         <h2>Quick Start</h2>
       </header>
 
-      <p>Copy <a href="https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco.c">shoco.c</a>, <a href="https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco.h">shoco.h</a> and <a href="https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco_table.h">shoco_table.h</a> from <a href="https://github.com/Ed-von-Schleck/shoco">github/shoco</a> over to your project. Include <code>shoco.h</code> and you are ready to use the <a href="#api">API</a>!</p>
+      <p>$ time ./test_input &lt; /usr/share/dict/wordsCopy <a href="https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco.c">shoco.c</a>, <a href="https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco.h">shoco.h</a> and <a href="https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/shoco_model.h">shoco_model.h</a> from <a href="https://github.com/Ed-von-Schleck/shoco">github/shoco</a> over to your project. Include <code>shoco.h</code> and you are ready to use the <a href="#api">API</a>!</p>
     </div>
   </section>
   
@@ -199,7 +201,7 @@ window.onload = function() {
 
       <p>Maybe your typical input isn’t english words. Maybe it’s german or french – or whole sentences. Or file system paths. Or URLs. While the standard compression model of <strong>shoco</strong> should work for all of these, it might be worthwile to train <strong>shoco</strong> for this specific type of input data.</p>
 <p>Fortunately, that’s really easy. <strong>shoco</strong> includes a python script called <code>generate_compression_model.py</code> that takes one or more text files and ouputs a header file ready for <strong>shoco</strong> to use. An example that trains against a dictionary (btw., not the best kind of training data, because it’s dominated by uncommon words):</p>
-<div class="codehilite"><pre><span class="nv">$ </span>./generate_successor_table.py /usr/share/dict/words -o shoco_table.h
+<div class="codehilite"><pre><span class="nv">$ </span>./generate_successor_table.py /usr/share/dict/words -o shoco_model.h
 </pre></div>
 
 
@@ -222,7 +224,7 @@ window.onload = function() {
 
       <h3>smaz</h3>
 <p>There’s another good small string compressor out there: <a href="https://github.com/antirez/**smaz**"><strong>smaz</strong></a>. <strong>smaz</strong> seems to be dictionary based, while <strong>shoco</strong> is an entropy encoder. As a result, <strong>smaz</strong> will often do better than <strong>shoco</strong> when compressing common english terms. However, <strong>shoco</strong> typically beats <strong>smaz</strong> for more obscure input, as long as it’s ASCII. Smaz may enlarge your string for uncommon words (like numbers), <strong>shoco</strong> will never do that for ASCII strings.</p>
-<p>Performance-wise, <strong>shoco</strong> is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in <code>/usr/dict/share/words</code> with <strong>smaz</strong> takes around 0.325s on my computer and compresses on average by 28%, while <strong>shoco</strong> has a compression average of 33% (with the standard table; an optimized table will be even better) and takes around 0.140s. <strong>shoco</strong> is <em>especially</em> fast at decompression.</p>
+<p>Performance-wise, <strong>shoco</strong> is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in <code>/usr/dict/share/words</code> with <strong>smaz</strong> takes around 0.325s on my computer and compresses on average by 28%, while <strong>shoco</strong> has a compression average of 33% (with the standard table; an optimized table will be even better) and takes around 0.145s. <strong>shoco</strong> is <em>especially</em> fast at decompression.</p>
 <p><strong>shoco</strong> can be trained with user data, while <strong>smaz</strong>’s dictionary is built-in. That said, the maximum compression rate of <strong>smaz</strong> is hard to reach for <strong>shoco</strong>, so depending on your input type, you might fare better with <strong>smaz</strong> (there’s no way around it: You have to measure it yourself).</p>
 <h3>gzip, xz</h3>
 <p>As mentioned, <strong>shoco</strong>’s compression ratio can’t (and doesn’t want to) compete with gzip et al. for strings larger than a few bytes. But for very small strings, it will always be better than standard compressors.</p>
@@ -276,6 +278,49 @@ window.onload = function() {
 
 <p>The compressed string is really a <a href="https://developer.mozilla.org/en-US/docs/Web/API/Uint8Array">Uint8Array</a>, since that resembles a C string more closely. The Javascript version is not as furiously fast as the C version because there’s dynamic (heap) memory allocation involved, but I guess there’s no way around it.</p>
 <p><code>shoco.js</code> should be usable as a node.js module.</p>
+    </div>
+  </section>
+  
+  <section id="tools" class="odd">
+    <div class="container">
+
+      <header>
+        <h2>Tools And Other Included Extras</h2>
+      </header>
+
+      <p>Most of them have been mentioned already, but for completeness sake: Let’s have a quick overview over what you’ll find in the repo:</p>
+<h4><code>shoco.c</code>, <code>shoco.h</code>, <code>shoco_model.h</code></h4>
+<p>The heart of the project. If you don’t want to bother with nitty-gritty details, and the compression works for you, it’s all you’ll ever need.</p>
+<h4><code>tables/*</code></h4>
+<p>As examples, there are more tables included. Feel free to use one of them instead of the default model: Just copy it over <code>shoco_model.h</code> and you’re all set. Re-build them with <code>make tables</code>.</p>
+<h4><code>training_data/*</code></h4>
+<p>Some books from <a href="http://www.gutenberg.org/ebooks/">Project Gutenberg</a> used for generating the default model.</p>
+<h4><code>shoco.js</code></h4>
+<p>Javascript library, generated by <strong>emscripten</strong>. Also usable as a <a href="http://nodejs.org/">node.js</a> module (put it in <code>node_modules</code> and <code>require</code> it). Re-build with <code>make js</code>.</p>
+<h4><code>shoco.html</code></h4>
+<p>A example of how to use <code>shoco.js</code> in a website.</p>
+<h4><code>shoco</code></h4>
+<p>A testing tool for compressing and decompressing files. Build it with <code>make shoco</code> or just <code>make</code>. Use it like this:</p>
+<div class="codehilite"><pre><span class="nv">$ </span>shoco compress file-to-compress.txt compressed-file.shoco
+<span class="nv">$ </span>shoco decompress compressed-file.shoco decompressed-file.txt
+</pre></div>
+
+
+<p>It’s not meant for production use, because I can’t image why one would want to use <strong>shoco</strong> on entire files.</p>
+<h4><code>test_input</code></h4>
+<p>Another testing tool for compressing and decompressing every line in the input file. Build it with <code>make test_input</code>. Usage example:</p>
+<div class="codehilite"><pre><span class="nv">$ </span><span class="nb">time</span> ./test_input &lt; /usr/share/dict/words 
+Number of compressed strings: 479828, average compression ratio: 33%
+
+real   0m0.158s
+user   0m0.145s
+sys    0m0.013s
+</pre></div>
+
+
+<p>Adding the command line switch <code>-v</code> gives line-by-line information about the compression ratios.</p>
+<h4><code>Makefile</code></h4>
+<p>It’s not the cleanest or l33test Makefile ever, but it should give you hints for integrating <strong>shoco</strong> into your project.</p>
     </div>
   </section>
   
