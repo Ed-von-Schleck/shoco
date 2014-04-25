@@ -270,7 +270,7 @@ def main():
     parser.add_argument("-o", "--output", type=str, help="Output file for the resulting succession table.")
     parser.add_argument("--split", choices=["newline", "whitespace", "none"], default="newline", help=r"Split the input into chunks at this separator. Default: newline")
     parser.add_argument("--strip", choices=["whitespace", "punctuation", "none"], default="whitespace", help="Remove leading and trailing characters from each chunk. Default: whitespace")
-    parser.add_argument("--threads",default=str(multiprocessing.cpu_count()),help="Set the number of threads to use.")
+    parser.add_argument("--threads",default=multiprocessing.cpu_count(),help="Set the number of threads to use.")
 
     generation_group = parser.add_argument_group("table and encoding generation arguments", "Higher values may provide for better compression ratios, but will make compression/decompression slower. Likewise, lower numbers make compression/decompression faster, but will likely make hurt the compression ratio. The default values are mostly a good compromise.")
     generation_group.add_argument("--max-leading-char-bits", type=int, default=5, help="The maximum amount of bits that may be used for representing a leading character. Default: 5")
@@ -285,7 +285,7 @@ def main():
     successors_count = 1 << args.max_successor_bits
 
     log("using {} threads".format(args.threads))
-    tpool=multiprocessing.Pool(int(args.threads))
+    tpool=multiprocessing.Pool(args.threads)
     
     log("finding bigrams ... ", end="")
     sys.stdout.flush()
