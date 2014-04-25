@@ -93,6 +93,27 @@ window.onload = function() {
     </nav>
 
   </div>
+  <div class="bottom">
+
+    <a href="https://flattr.com/submit/auto?user_id=Christian.Schramm&url=http%3A%2F%2Fed-von-schleck.github.io%2Fshoco" target="_blank"><img src="//api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0"></a>
+    <script data-gittip-username="Ed-von-Schleck"
+        data-gittip-widget="button"
+        src="//gttp.co/v1.js"></script>
+    <!-- Social Icons -->
+
+    <!--
+    <ul class="icons">
+      <li><a href="#" class="fa fa-twitter solo"><span>Twitter</span></a></li>
+      <li><a href="#" class="fa fa-facebook solo"><span>Facebook</span></a></li>
+      <li><a href="#" class="fa fa-github solo"><span>Github</span></a></li>
+      <li><a href="#" class="fa fa-dribbble solo"><span>Dribbble</span></a></li>
+      <li><a href="#" class="fa fa-envelope solo"><span>Email</span></a></li>
+      <li><a href="#"><img src="images/flattr-awesome.svg" / width="32px"></a></li>
+    </ul>
+    -->
+
+  </div>
+
 </div>
 
 <!-- Main -->
@@ -217,7 +238,7 @@ window.onload = function() {
       </header>
 
       <h3>smaz</h3>
-<p>There’s another good small string compressor out there: <a href="https://github.com/antirez/**smaz**"><strong>smaz</strong></a>. <strong>smaz</strong> seems to be dictionary based, while <strong>shoco</strong> is an entropy encoder. As a result, <strong>smaz</strong> will often do better than <strong>shoco</strong> when compressing common english terms. However, <strong>shoco</strong> typically beats <strong>smaz</strong> for more obscure input, as long as it’s ASCII. Smaz may enlarge your string for uncommon words (like numbers), <strong>shoco</strong> will never do that for ASCII strings.</p>
+<p>There’s another good small string compressor out there: <a href="https://github.com/antirez/**smaz**"><strong>smaz</strong></a>. <strong>smaz</strong> seems to be dictionary based, while <strong>shoco</strong> is an entropy encoder. As a result, <strong>smaz</strong> will often do better than <strong>shoco</strong> when compressing common english terms. However, <strong>shoco</strong> typically beats <strong>smaz</strong> for more obscure input, as long as it’s ASCII. <strong>smaz</strong> may enlarge your string for uncommon words (like numbers), <strong>shoco</strong> will never do that for ASCII strings.</p>
 <p>Performance-wise, <strong>shoco</strong> is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in <code>/usr/dict/share/words</code> with <strong>smaz</strong> takes around 0.325s on my computer and compresses on average by 28%, while <strong>shoco</strong> has a compression average of 33% (with the standard model; an optimized model will be even better) and takes around 0.145s. <strong>shoco</strong> is <em>especially</em> fast at decompression.</p>
 <p><strong>shoco</strong> can be trained with user data, while <strong>smaz</strong>’s dictionary is built-in. That said, the maximum compression rate of <strong>smaz</strong> is hard to reach for <strong>shoco</strong>, so depending on your input type, you might fare better with <strong>smaz</strong> (there’s no way around it: You have to measure it yourself).</p>
 <h3>gzip, xz</h3>

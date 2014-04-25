@@ -3,7 +3,7 @@
 
 ### smaz
 
-There’s another good small string compressor out there: [**smaz**](https://github.com/antirez/**smaz**). **smaz** seems to be dictionary based, while **shoco** is an entropy encoder. As a result, **smaz** will often do better than **shoco** when compressing common english terms. However, **shoco** typically beats **smaz** for more obscure input, as long as it’s ASCII. Smaz may enlarge your string for uncommon words (like numbers), **shoco** will never do that for ASCII strings.
+There’s another good small string compressor out there: [**smaz**](https://github.com/antirez/**smaz**). **smaz** seems to be dictionary based, while **shoco** is an entropy encoder. As a result, **smaz** will often do better than **shoco** when compressing common english terms. However, **shoco** typically beats **smaz** for more obscure input, as long as it’s ASCII. **smaz** may enlarge your string for uncommon words (like numbers), **shoco** will never do that for ASCII strings.
 
 Performance-wise, **shoco** is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in `/usr/dict/share/words` with **smaz** takes around 0.325s on my computer and compresses on average by 28%, while **shoco** has a compression average of 33% (with the standard model; an optimized model will be even better) and takes around 0.145s. **shoco** is _especially_ fast at decompression.
 

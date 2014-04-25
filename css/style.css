@@ -960,7 +960,7 @@ table.default tbody
   margin: 1.75em 1.5em 1.5em 1.5em;
   min-height: 48px;
   cursor: default;
-  text-align: left;
+  text-align: right;
 }
 
 #logo h1
