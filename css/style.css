@@ -930,6 +930,10 @@ table.default tbody
   left: 0;
   bottom: 0;
   width: 100%;
+  text-align: center;
+}
+#header .bottom a {
+  border: 0;
 }
 
 #header .icons
