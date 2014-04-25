@@ -1,7 +1,7 @@
 ## Tools And Other Included Extras
 +++
 
-Most of them have been mentioned already, but for completeness sake – let’s have a quick overview over what you’ll find in the repo:
+Most of them have been mentioned already, but for the sake of completeness – let’s have a quick overview over what you’ll find in the repo:
 
 #### `shoco.c`, `shoco.h`, `shoco_model.h`
 
