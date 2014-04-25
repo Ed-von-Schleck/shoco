@@ -76,7 +76,7 @@ This is most likely all you’ll need to generate a good model, but if you are a
 
 ### smaz
 
-There’s another good small string compressor out there: [**smaz**](https://github.com/antirez/**smaz**). **smaz** seems to be dictionary based, while **shoco** is an entropy encoder. As a result, **smaz** will often do better than **shoco** when compressing common english terms. However, **shoco** typically beats **smaz** for more obscure input, as long as it’s ASCII. Smaz may enlarge your string for uncommon words (like numbers), **shoco** will never do that for ASCII strings.
+There’s another good small string compressor out there: [**smaz**](https://github.com/antirez/**smaz**). **smaz** seems to be dictionary based, while **shoco** is an entropy encoder. As a result, **smaz** will often do better than **shoco** when compressing common english terms. However, **shoco** typically beats **smaz** for more obscure input, as long as it’s ASCII. **smaz** may enlarge your string for uncommon words (like numbers), **shoco** will never do that for ASCII strings.
 
 Performance-wise, **shoco** is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in `/usr/dict/share/words` with **smaz** takes around 0.325s on my computer and compresses on average by 28%, while **shoco** has a compression average of 33% (with the standard model; an optimized model will be even better) and takes around 0.145s. **shoco** is _especially_ fast at decompression.
 
@@ -181,8 +181,8 @@ Invoke them with `make check`. They should pass.
 
 ## Feedback
 
-If you use **shoco**, or like it for whatever reason, I’d really love to [hear from you](mailto:christian.h.m.schramm at gmail.com - replace the 'at' with @ and delete this sentence-)! If wished for, I can provide integration with **shoco** for your services (at a price, of course). Also, a nice way of saying thanks is to support me financially via
-[git tip](https://www.gittip.com/Ed-von-Schleck/) or [flattr](https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://github.com/Ed-von-Schleck/&title=shoco&language=C&tags=github&category=software).
+If you use **shoco**, or like it for whatever reason, I’d really love to [hear from you](mailto:christian.h.m.schramm at gmail.com - replace the 'at' with @ and delete this sentence-)! If wished for, I can provide integration with **shoco** for your commercial services (at a price, of course), or for your totally awesome free and open source software (for free, if I find the time). Also, a nice way of saying thanks is to support me financially via
+[git tip](https://www.gittip.com/Ed-von-Schleck/) or [flattr](https://flattr.com/submit/auto?user_id=Christian.Schramm&url=https://ed-von-schleck.github.io/shoco&language=C&tags=github&category=software).
 
 If you find a bug, or have a feature request, [file it](https://github.com/Ed-von-Schleck/shoco/issues/new)! If you have a question about usage or internals of **shoco**, ask it on [stackoverflow](https://stackoverflow.com/questions/ask) for good exposure – and write me a mail, so that I don’t miss it.
 
