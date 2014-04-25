@@ -32,7 +32,8 @@ window.onload = function() {
   ratio_span =  document.getElementById('ratio_number');
   on_in_str_change = function() {
     compressed = shoco.compress(in_str_input.value); 
-    ratio_span.innerHTML = (((in_str_input.value.length - compressed.length) / in_str_input.value.length) * 100) | 0;
+    encoded_input_length = unescape(encodeURIComponent(in_str_input.value)).length;
+    ratio_span.innerHTML = (((encoded_input_length - compressed.length) / encoded_input_length) * 100) | 0;
   }
   in_str_input.addEventListener("keyup", on_in_str_change);
   on_in_str_change();
