@@ -2,7 +2,7 @@
 **shoco**: a fast compressor for short strings
 --------------------------------------------
 
-**shoco** is a C library to compress and decompress short strings. It is [very fast](#comparisons-with-other-compressors) and [easy to use](#api). The default compression model is optimized for english words, but you can [generate your own compression model](#generating-compression-models) based on *your specific* input data.
+**shoco** is a C library to compress and decompress short strings. It is [very fast](#comparisons-with-other-compressors) and [easy to use](#api). The default compression model is optimized for English words, but you can [generate your own compression model](#generating-compression-models) based on *your specific* input data.
 
 **shoco** is free software, distributed under the [MIT license](https://raw.githubusercontent.com/Ed-von-Schleck/shoco/master/LICENSE).
 
@@ -44,7 +44,7 @@ In every language, some characters are used more often than others. English is n
 
 How **shoco** actually marks these packed representations is a bit more complicated than that (e.g., we also need to specify *how many* packed characters follow, so a single leading bit won’t be sufficient), but the principle still holds.
 
-But **shoco** is a bit smarter than just to abbreviate characters based on absolute frequency – languages have more regularities than that. Some characters are more likely to be encountered next to others; the canonical example would be **q**, that’s *almost always* followed by a **u**. In english, *the*, *she*, *he*, *then* are all very common words – and all have a **h** followed by a **e**. So if we’d assemble a list of common characters *following common characters*, we can do with even less bits to represent these *successor* characters, and still have a good hit rate. That’s the idea of **shoco**: Provide short representations of characters based on the previous character.
+But **shoco** is a bit smarter than just to abbreviate characters based on absolute frequency – languages have more regularities than that. Some characters are more likely to be encountered next to others; the canonical example would be **q**, that’s *almost always* followed by a **u**. In English, *the*, *she*, *he*, *then* are all very common words – and all have a **h** followed by a **e**. So if we’d assemble a list of common characters *following common characters*, we can do with even less bits to represent these *successor* characters, and still have a good hit rate. That’s the idea of **shoco**: Provide short representations of characters based on the previous character.
 
 This does not allow for optimal compression – by far. But if one carefully aligns the representation packs to byte boundaries, and uses the ASCII-first-bit-trick above to encode the indices, it works well enough. Moreover, it is blazingly fast. You wouldn’t want to use **shoco** for strings larger than, say, a hundred bytes, because then the overhead of a full-blown compressor like **gzip** begins to be dwarfed by the advantages of the much more efficient algorithms it uses.
 
@@ -54,9 +54,9 @@ How does **shoco** get the information about character frequencies? They are not
 
 ## Generating Compression Models
 
-Maybe your typical input isn’t english words. Maybe it’s german or french – or whole sentences. Or file system paths. Or URLs. While the standard compression model of **shoco** should work for all of these, it might be worthwile to train **shoco** for this specific type of input data.
+Maybe your typical input isn’t English words. Maybe it’s German or French – or whole sentences. Or file system paths. Or URLs. While the standard compression model of **shoco** should work for all of these, it might be worthwhile to train **shoco** for this specific type of input data.
 
-Fortunately, that’s really easy: **shoco** includes a python script called `generate_compression_model.py` that takes one or more text files and ouputs a header file ready for **shoco** to use. Here’s an example that trains **shoco** with a dictionary (btw., not the best kind of training data, because it’s dominated by uncommon words):
+Fortunately, that’s really easy: **shoco** includes a python script called `generate_compression_model.py` that takes one or more text files and outputs a header file ready for **shoco** to use. Here’s an example that trains **shoco** with a dictionary (btw., not the best kind of training data, because it’s dominated by uncommon words):
 
 ```bash
 $ ./generate_compression_model.py /usr/share/dict/words -o shoco_model.h
@@ -68,7 +68,7 @@ There are options on how to chunk and strip the input data – for example, if w
 $ ./generate_compression_model.py --split=whitespace --strip=punctuation README.md
 ```
 
-Since we haven’t specified an output file, the resulting table file is printed on stdout.
+Since we haven’t specified an output file, the resulting table file is printed on standard output.
 
 This is most likely all you’ll need to generate a good model, but if you are adventurous, you might want to play around with all the options of the script: Type `generate_compression_model.py --help` to get a friendly help message. We won’t dive into the details here, though – just one word of warning: Generating tables can be slow if your input data is large, and _especially_ so if you use the `--optimize-encoding` option. Using [pypy](http://pypy.org/) can significantly speed up the process.
 
@@ -76,7 +76,7 @@ This is most likely all you’ll need to generate a good model, but if you are a
 
 ### smaz
 
-There’s another good small string compressor out there: [**smaz**](https://github.com/antirez/**smaz**). **smaz** seems to be dictionary based, while **shoco** is an entropy encoder. As a result, **smaz** will often do better than **shoco** when compressing common english terms. However, **shoco** typically beats **smaz** for more obscure input, as long as it’s ASCII. **smaz** may enlarge your string for uncommon words (like numbers), **shoco** will never do that for ASCII strings.
+There’s another good small string compressor out there: [**smaz**](https://github.com/antirez/smaz). **smaz** seems to be dictionary based, while **shoco** is an entropy encoder. As a result, **smaz** will often do better than **shoco** when compressing common English terms. However, **shoco** typically beats **smaz** for more obscure input, as long as it’s ASCII. **smaz** may enlarge your string for uncommon words (like numbers), **shoco** will never do that for ASCII strings.
 
 Performance-wise, **shoco** is typically faster by at least a factor of 2. As an example, compressing and decompressing all words in `/usr/dict/share/words` with **smaz** takes around 0.325s on my computer and compresses on average by 28%, while **shoco** has a compression average of 33% (with the standard model; an optimized model will be even better) and takes around 0.145s. **shoco** is _especially_ fast at decompression.
 
@@ -94,7 +94,7 @@ shoco      | 0.070s           | 0.010s             | 3,393,975
 gzip       | 0.470s           | 0.048s             | 1,476,083
 xz         | 3.300s           | 0.148s             | 1,229,980
 
-This demonstates quite clearly that **shoco**’s compression rate sucks, but also that it’s _very_ fast.
+This demonstrates quite clearly that **shoco**’s compression rate sucks, but also that it’s _very_ fast.
 
 ## Javascript Version
 
