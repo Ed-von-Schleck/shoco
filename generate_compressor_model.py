@@ -9,7 +9,7 @@ import re
 import sys
 
 WHITESPACE = b" \t\n\r\x0b\x0c\xc2\xad"
-PUNCTUATION = b"!\"#$%&()*+,./:;<=>?@[\\]^_{|}~"
+PUNCTUATION = b"!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
 TABLE_C = """#ifndef _SHOCO_INTERNAL
 #error This header file is only to be included by 'shoco.c'.
 #endif
