@@ -4,8 +4,8 @@
 Here is all of it:
 
 ```C
-size_t shoco_compress(const char * const in, size_t len, char * const out, size_t bufsize);
-size_t shoco_decompress(const char * const in, size_t len, char * const out, size_t bufsize);
+size_t shoco_compress(const char * in, size_t len, char * out, size_t bufsize);
+size_t shoco_decompress(const char * in, size_t len, char * out, size_t bufsize);
 ```
 
 If the `len` argument for `shoco_compress` is 0, the input char is assumed to be null-terminated. If it’s a positive integer, parsing the input will stop after this length, or at a null-char, whatever comes first. `shoco_decompress` however will need a positive integer for `len` (most likely you should pass the return value of `shoco_compress`).
