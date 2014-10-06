@@ -16,6 +16,8 @@
 
 #if defined(_MSC_VER)
   #define _ALIGNED __declspec(align(16))
+  #define inline __inline
+  #define restrict __restrict
 #elif defined(__GNUC__)
   #define _ALIGNED __attribute__ ((aligned(16)))
 #else
