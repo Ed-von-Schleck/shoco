@@ -4,6 +4,8 @@
 
 #if defined(_MSC_VER)
 #define shoco_restrict __restrict
+#elif __GNUC__
+#define shoco_restrict __restrict__
 #else
 #define shoco_restrict restrict
 #endif
