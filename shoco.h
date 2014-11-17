@@ -21,4 +21,4 @@ size_t shoco_decompress(const char * const shoco_restrict in, size_t len, char *
 }
 #endif
 
-#undef shoco_restrict
+
