@@ -17,7 +17,6 @@
 #if defined(_MSC_VER)
   #define _ALIGNED __declspec(align(16))
   #define inline __inline
-  #define restrict __restrict
 #elif defined(__GNUC__)
   #define _ALIGNED __attribute__ ((aligned(16)))
 #else
@@ -48,7 +47,7 @@ union Code {
 };
 
 #ifdef HAVE_SSE2
-static inline int check_indices(const int16_t * restrict indices, int pack_n) {
+static inline int check_indices(const int16_t * shoco_restrict indices, int pack_n) {
   __m128i zero = _mm_setzero_si128();
   __m128i indis = _mm_load_si128 ((__m128i *)indices);
   __m128i masks = _mm_load_si128 ((__m128i *)packs[pack_n].masks);
@@ -59,7 +58,7 @@ static inline int check_indices(const int16_t * restrict indices, int pack_n) {
   return (result == 0);
 }
 #else
-static inline int check_indices(const int16_t * restrict indices, int pack_n) {
+static inline int check_indices(const int16_t * shoco_restrict indices, int pack_n) {
   for (unsigned int i = 0; i < packs[pack_n].bytes_unpacked; ++i)
     if (indices[i] > packs[pack_n].masks[i])
       return 0;
@@ -67,14 +66,14 @@ static inline int check_indices(const int16_t * restrict indices, int pack_n) {
 }
 #endif
 
-static inline int find_best_encoding(const int16_t * restrict indices, unsigned int n_consecutive) {
+static inline int find_best_encoding(const int16_t * shoco_restrict indices, unsigned int n_consecutive) {
   for (int p = PACK_COUNT - 1; p >= 0; --p)
     if ((n_consecutive >= packs[p].bytes_unpacked) && (check_indices(indices, p)))
       return p;
   return -1;
 }
 
-size_t shoco_compress(const char * const restrict original, size_t strlen, char * const restrict out, size_t bufsize) {
+size_t shoco_compress(const char * const shoco_restrict original, size_t strlen, char * const shoco_restrict out, size_t bufsize) {
   char *o = out;
   char * const out_end = out + bufsize;
   const char *in = original;
@@ -158,7 +157,7 @@ last_resort:
   return o - out;
 }
 
-size_t shoco_decompress(const char * const restrict original, size_t complen, char * const restrict out, size_t bufsize) {
+size_t shoco_decompress(const char * const shoco_restrict original, size_t complen, char * const shoco_restrict out, size_t bufsize) {
   char *o = out;
   char * const out_end = out + bufsize;
   const char *in = original;
