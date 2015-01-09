@@ -7,7 +7,11 @@
     #include <stdlib.h>
     #define swap(x) _byteswap_ulong(x)
   #elif defined (__GNUC__)
-    #define swap(x) __builtin_bswap32(x)
+    #if defined(__builtin_bswap32)
+      #define swap(x) __builtin_bswap32(x)
+    #else
+      #define swap(x) ((x<<24) + ((x&0x0000FF00)<<8) + ((x&0x00FF0000)>>8) + (x>>24))
+    #endif
   #else
     #include <byteswap.h>
     #define swap(x) bswap_32(x)
