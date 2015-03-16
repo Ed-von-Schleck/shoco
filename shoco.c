@@ -179,13 +179,17 @@ size_t shoco_decompress(const char * const shoco_restrict original, size_t compl
         return bufsize + 1;
 
       // ignore the sentinel value for non-ascii chars
-      if (*in == 0x00)
-        ++in;
+      if (*in == 0x00) {
+        if (++in >= in_end)
+          return SIZE_MAX;
+      }
 
       *o++ = *in++;
     } else {
       if (o + packs[mark].bytes_unpacked > out_end)
         return bufsize + 1;
+      else if (in + packs[mark].bytes_packed > in_end)
+        return SIZE_MAX;
 
       // This should be OK as well, but it fails with emscripten.
       // Test this with new versions of emcc.
