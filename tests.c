@@ -41,6 +41,10 @@ int main() {
   assert(ret == 1);
   assert(buf_4[1] == 'x');
 
+  ret = shoco_compress("t\x80", 1, buf_4, 4);
+  assert(ret == 1);
+  assert(buf_4[1] == 'x');
+
   buf_4[1] = 'y';
   ret = shoco_compress("test", 1, buf_4, 1);
   assert(ret == 1);

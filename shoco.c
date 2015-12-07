@@ -92,7 +92,7 @@ size_t shoco_compress(const char * const shoco_restrict original, size_t strlen,
   const char * const in_end = original + strlen;
 
   while ((*in != '\0')) {
-    if (strlen && (in > in_end))
+    if (strlen && (in == in_end))
       break;
 
     // find the longest string of known successors
@@ -103,7 +103,7 @@ size_t shoco_compress(const char * const shoco_restrict original, size_t strlen,
 
     rest = in_end - in;
     for (n_consecutive = 1; n_consecutive <= MAX_SUCCESSOR_N; ++n_consecutive) {
-      if (strlen && (n_consecutive > rest))
+      if (strlen && (n_consecutive == rest))
         break;
 
       current_index = chr_ids_by_chr[(unsigned char)in[n_consecutive]];
