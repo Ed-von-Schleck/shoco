@@ -7,6 +7,7 @@ import argparse
 import itertools
 import re
 import sys
+import multiprocessing
 
 WHITESPACE = b" \t\n\r\x0b\x0c\xc2\xad"
 PUNCTUATION = b"!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
@@ -242,7 +243,7 @@ def chunkinator(files, split, strip):
         chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + "]", data) for data in all_in)
 
     strip = strip.lower()
-    for chunk in chunks:
+    for chunk in chunks:#XXX
         if strip == "whitespace":
             chunk = chunk.strip()
         elif strip == "punctuation":
@@ -259,6 +260,17 @@ def nearest_lg(number):
         lg += 1
     return lg
 
+def count_bigrams(chunk):
+    bigram_counters = {} #collections.OrderedDict()
+    first_char_counter = collections.Counter()
+    bgs = bigrams(chunk)
+    for bg in bgs:
+        a, b = bg
+        first_char_counter[a] += 1
+        if a not in bigram_counters:
+            bigram_counters[a] = collections.Counter()
+        bigram_counters[a][b] += 1
+    return (first_char_counter,bigram_counters)
 
 def main():
     parser = argparse.ArgumentParser(description="Generate a succession table for 'shoco'.")
@@ -266,6 +278,7 @@ def main():
     parser.add_argument("-o", "--output", type=str, help="Output file for the resulting succession table.")
     parser.add_argument("--split", choices=["newline", "whitespace", "none"], default="newline", help=r"Split the input into chunks at this separator. Default: newline")
     parser.add_argument("--strip", choices=["whitespace", "punctuation", "none"], default="whitespace", help="Remove leading and trailing characters from each chunk. Default: whitespace")
+    parser.add_argument("--threads",default=str(multiprocessing.cpu_count()),help="Set the number of threads to use.")
 
     generation_group = parser.add_argument_group("table and encoding generation arguments", "Higher values may provide for better compression ratios, but will make compression/decompression slower. Likewise, lower numbers make compression/decompression faster, but will likely make hurt the compression ratio. The default values are mostly a good compromise.")
     generation_group.add_argument("--max-leading-char-bits", type=int, default=5, help="The maximum amount of bits that may be used for representing a leading character. Default: 5")
@@ -279,22 +292,30 @@ def main():
     chars_count = 1 << args.max_leading_char_bits
     successors_count = 1 << args.max_successor_bits
 
-
+    log("using {} threads".format(args.threads))
+    tpool=multiprocessing.Pool(int(args.threads))
+    
     log("finding bigrams ... ", end="")
     sys.stdout.flush()
-    bigram_counters = collections.OrderedDict()
-    first_char_counter = collections.Counter()
-    chunks = list(chunkinator(args.file, args.split, args.strip))
-    for chunk in chunks:
-        bgs = bigrams(chunk)
-        for bg in bgs:
-            a, b = bg
-            first_char_counter[a] += 1
-            if a not in bigram_counters:
-                bigram_counters[a] = collections.Counter()
-            bigram_counters[a][b] += 1
-
-
+    chunks = chunkinator(args.file, args.split, args.strip)
+    log("chunked")
+    first_char_counter,bigram_counters=zip(*tpool.map(count_bigrams,chunks))
+    log("reducing ... ",end="")
+    
+    #reduce thread results for first char counter
+    def dosum(a,b):
+        return a+b #sum() doesn't use the + operator it seems. weird.
+    first_char_counter=reduce(dosum,first_char_counter)
+    
+    #reduce thread results for bigram counters
+    n_bigram_counters = {}
+    for c in bigram_counters:
+        for a in c:
+            if a not in n_bigram_counters:
+                n_bigram_counters[a]=collections.Counter()
+            n_bigram_counters[a]+=c[a]
+    bigram_counters=n_bigram_counters
+    
     log("done.")
     # generate list of most common chars
     successors = collections.OrderedDict()
