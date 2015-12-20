@@ -116,7 +116,7 @@ class Encoding(object):
         self.bits = Bits(bitlist)
         self.masks = Masks(bitlist)
         self.offsets = Offsets(bitlist)
-        self.packed = sum(bitlist) / 8
+        self.packed = sum(bitlist) // 8
         self.size = len([bits for bits in bitlist if bits])
         self.unpacked = self.size - 1
         self._hash = tuple(bitlist).__hash__()
