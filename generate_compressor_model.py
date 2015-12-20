@@ -302,8 +302,8 @@ def main():
         successors[char] = [successor for successor, freq in bigram_counters[char].most_common(1 << args.max_successor_bits)]
         successors[char] += ['\0'] * ((1 << args.max_successor_bits) - len(successors[char]))
 
-    max_chr = ord(max(successors.keys())) + 1
-    min_chr = ord(min(successors.keys()))
+    max_chr = max(successors.keys()) + 1
+    min_chr = min(successors.keys())
 
     chrs_indices = collections.OrderedDict(zip(successors.keys(), range(chars_count)))
     chrs_reversed = [chrs_indices.get(chr(i), -1) for i in range(256)]
