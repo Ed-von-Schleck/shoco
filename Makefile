@@ -48,7 +48,7 @@ tests: tests.o $(OBJECTS) $(HEADERS)
 
 .PHONY: clean
 clean:
-	rm *.o
+	rm -f *.o
 
 .PHONY: js
 js: shoco.js
