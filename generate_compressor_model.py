@@ -51,8 +51,8 @@ typedef struct Pack {{
   const unsigned int bytes_unpacked;
   const unsigned int offsets[{max_elements_len}];
   const int16_t _ALIGNED masks[{max_elements_len}];
-  const char header_mask;
-  const char header;
+  const unsigned char header_mask;
+  const unsigned char header;
 }} Pack;
 
 #ifdef _MSC_VER
