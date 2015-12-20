@@ -384,7 +384,7 @@ def main():
         print(out)
     else:
         with open(args.output, "wb") as f:
-            f.write(out)
+            f.write(out.encode())
             log("done.")
 
 if __name__ == "__main__":
