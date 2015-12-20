@@ -239,7 +239,7 @@ def chunkinator(files, split, strip):
     elif split == "newline":
         chunks = itertools.chain.from_iterable(data.splitlines() for data in all_in)
     elif split == "whitespace":
-        chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + "]", data) for data in all_in)
+        chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + b"]", data) for data in all_in)
 
     strip = strip.lower()
     for chunk in chunks:
