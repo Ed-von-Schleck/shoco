@@ -8,10 +8,10 @@ static PyObject *pyshoco_compress(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "s", &in))
         return NULL;
     
-	const size_t bufsize = strlen(in)*2+1;
-	char out[bufsize];
-	memset(out, 0, bufsize);
-	shoco_compress(in, strlen(in), out, bufsize);
+    const size_t bufsize = strlen(in)*2+1;
+    char out[bufsize];
+    memset(out, 0, bufsize);
+    shoco_compress(in, strlen(in), out, bufsize);
     return Py_BuildValue("s", out);
 }
 
@@ -21,10 +21,10 @@ static PyObject *pyshoco_decompress(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "s", &in))
         return NULL;
     
-	const size_t bufsize = strlen(in)*2+1;
-	char out[bufsize];
-	memset(out, 0, bufsize);
-	shoco_decompress(in, strlen(in), out, bufsize);
+    const size_t bufsize = strlen(in)*2+1;
+    char out[bufsize];
+    memset(out, 0, bufsize);
+    shoco_decompress(in, strlen(in), out, bufsize);
     return Py_BuildValue("s", out);
 }
 
