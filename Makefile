@@ -51,18 +51,7 @@ clean:
 	rm *.o
 
 .PHONY: js
-js: shoco.js
-
-.PHONY: py
-py:
-	$(CC) -c -o shoco.o shoco.c $(FLAGS)
-	$(CC) -shared -o shoco shoco.o
-	python setup.py build
-	
-.PHONY: pyinstall
-pyinstall: py
-	python setup.py install
-	
+js: shoco.js	
 
 shoco.js: $(OBJECTS) $(HEADERS) pre.js
 	emcc shoco.c -O3 -o $@ --closure 1 -s EXPORTED_FUNCTIONS="['_shoco_compress', '_shoco_decompress']" --pre-js pre.js
