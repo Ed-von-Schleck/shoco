@@ -1,0 +1,4 @@
+include pyshoco.c
+include setup.py
+include shoco.c
+include shoco.h
