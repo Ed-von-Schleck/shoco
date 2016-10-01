@@ -1,3 +1,8 @@
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdint.h>
 
 #if (defined (__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || __BIG_ENDIAN__)
@@ -220,4 +225,14 @@ size_t shoco_decompress(const char * const shoco_restrict original, size_t compl
     *o = '\0';
 
   return o - out;
+}
+
+int shoco_version(void)
+{
+  return SHOCO_VERSION_PATCH + (SHOCO_VERSION_MINOR * 100) + (SHOCO_VERSION_MAJOR * 10000);
+}
+
+const char * shoco_version_str(void)
+{
+  return SHOCO_VERSION_STRING;
 }
