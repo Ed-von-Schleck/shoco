@@ -1,0 +1,47 @@
+language: c
+
+compiler:
+  - gcc
+
+sudo: required
+
+dist: trusty
+
+env:
+  global:
+    - PREFIX="$HOME/build"
+    - PATH="$PREFIX/bin:$PATH"
+    - CFLAGS="-L$PREFIX/lib"
+    - CPPFLAGS="-I$PREFIX/include"
+    - PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
+    - CC="gcc-5"
+
+cache: false
+
+#branches:
+#  only:
+#    - master
+#    - travis
+
+before_install:
+  - travis_retry sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
+  - travis_retry sudo apt-get update -y
+  - travis_retry sudo apt-get install -y automake gcc-5 lcov pkg-config
+  - travis_retry gem install coveralls-lcov
+
+install:
+  - ./bootstrap
+  - ./configure --prefix="$PREFIX" CFLAGS="--coverage -fprofile-arcs -ftest-coverage $CFLAGS" LDFLAGS="--coverage"
+  - make clean all
+
+before_script:
+  - lcov --directory . --zerocounters
+  - lcov --directory . --capture --compat-libtool --initial --output-file coverage.info
+
+script:
+  - make check install
+
+after_success:
+  - lcov --no-checksum --directory . --capture --compat-libtool --output-file coverage.info
+  - lcov --remove coverage.info "/usr*" --remove coverage.info "*/tests/*" --remove coverage.info "shoco_model.h" --remove coverage.info "shoco_table.h" --compat-libtool --output-file coverage.info
+  - coveralls-lcov coverage.info
