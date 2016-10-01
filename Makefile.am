@@ -1,5 +1,5 @@
 
-EXTRA_DIST = README.md LICENSE
+EXTRA_DIST = README.md LICENSE generate_compressor_model.py Makefile.orig
 
 ACLOCAL_AMFLAGS = -I m4 --install
 
