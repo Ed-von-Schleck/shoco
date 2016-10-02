@@ -14,6 +14,8 @@
 extern "C" {
 #endif
 
+int shoco_version(void);
+const char * shoco_version_str(void);
 size_t shoco_compress(const char * const shoco_restrict in, size_t len, char * const shoco_restrict out, size_t bufsize);
 size_t shoco_decompress(const char * const shoco_restrict in, size_t len, char * const shoco_restrict out, size_t bufsize);
 

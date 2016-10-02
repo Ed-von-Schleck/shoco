@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   int len;
 
   if (argc < 4) {
-    puts(USAGE);
+    fprintf(stdout, "shoco v%s\n%s", shoco_version_str(), USAGE);
     return 1;
   }
   if (argv[1][0] == 'c')
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
   else if (argv[1][0] == 'd')
     job = JOB_DECOMPRESS;
   else {
-    puts(USAGE);
+    fprintf(stdout, "shoco v%s\n%s", shoco_version_str(), USAGE);
     return 1;
   }
   char *infile = argv[2];
