@@ -1,5 +1,4 @@
 #include <Python.h>
-#include <string.h>
 #include "shoco.h"
 
 #if PY_MAJOR_VERSION >= 3
@@ -44,26 +43,26 @@ PyMODINIT_FUNC initpyshoco(void)
 
 static PyObject *pyshoco_compress(PyObject *self, PyObject *args) {
     const char *in;
+    size_t insize;
 
-    if (!PyArg_ParseTuple(args, "s", &in))
+    if (!PyArg_ParseTuple(args, "s#", &in, &insize))
         return NULL;
     
-    const size_t bufsize = strlen(in)*2+1;
-    char out[bufsize];
-    memset(out, 0, bufsize);
-    shoco_compress(in, strlen(in), out, bufsize);
-    return Py_BuildValue("s", out);
+    size_t outsize = insize*2+1;
+    char out[outsize];
+    outsize = shoco_compress(in, insize, out, outsize);
+    return Py_BuildValue("s#", out, outsize);
 }
 
 static PyObject *pyshoco_decompress(PyObject *self, PyObject *args) {
     const char *in;
+    size_t insize;
 
-    if (!PyArg_ParseTuple(args, "s", &in))
+    if (!PyArg_ParseTuple(args, "s#", &in, &insize))
         return NULL;
     
-    const size_t bufsize = strlen(in)*2+1;
-    char out[bufsize];
-    memset(out, 0, bufsize);
-    shoco_decompress(in, strlen(in), out, bufsize);
-    return Py_BuildValue("s", out);
+    size_t outsize = insize*2+1;
+    char out[outsize];
+    outsize = shoco_decompress(in, insize, out, outsize);
+    return Py_BuildValue("s#", out, outsize);
 }
