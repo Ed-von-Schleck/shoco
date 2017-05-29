@@ -51,14 +51,14 @@ static PyObject *pyshoco_compress(PyObject *self, PyObject *args) {
     size_t outsize = insize*2+1;
     char out[outsize];
     outsize = shoco_compress(in, insize, out, outsize);
-    return Py_BuildValue("s#", out, outsize);
+    return Py_BuildValue("y#", out, outsize);
 }
 
 static PyObject *pyshoco_decompress(PyObject *self, PyObject *args) {
     const char *in;
     size_t insize;
 
-    if (!PyArg_ParseTuple(args, "s#", &in, &insize))
+    if (!PyArg_ParseTuple(args, "y#", &in, &insize))
         return NULL;
     
     size_t outsize = insize*2+1;
