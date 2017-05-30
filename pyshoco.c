@@ -32,12 +32,16 @@ PyMODINIT_FUNC PyInit_pyshoco(void)
     return PyModule_Create(&shocomodule);
 }
 
+const char *bytesFormat = "y#";
+
 #else
     
 PyMODINIT_FUNC initpyshoco(void)
 {
     (void) Py_InitModule("pyshoco", ShocoMethods);
 }
+
+const char *bytesFormat = "s#";
 
 #endif
 
@@ -51,14 +55,14 @@ static PyObject *pyshoco_compress(PyObject *self, PyObject *args) {
     size_t outsize = insize*2+1;
     char out[outsize];
     outsize = shoco_compress(in, insize, out, outsize);
-    return Py_BuildValue("s#", out, outsize);
+    return Py_BuildValue(bytesFormat, out, outsize);
 }
 
 static PyObject *pyshoco_decompress(PyObject *self, PyObject *args) {
     const char *in;
     size_t insize;
 
-    if (!PyArg_ParseTuple(args, "s#", &in, &insize))
+    if (!PyArg_ParseTuple(args, bytesFormat, &in, &insize))
         return NULL;
     
     size_t outsize = insize*2+1;
