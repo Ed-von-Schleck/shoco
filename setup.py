@@ -14,7 +14,7 @@ pyshoco = Extension(
 
 setup(
     name='pyshoco',
-    version='1.3.4',
+    version='1.3.5',
     description='Shoco Python wrapper module',
     ext_modules=[pyshoco],
     author='R. Rowe',
