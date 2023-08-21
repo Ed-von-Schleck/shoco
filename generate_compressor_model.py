@@ -332,12 +332,12 @@ def main():
         for packed, _ in ENCODINGS[:args.encoding_types]:
             counters[packed] = collections.Counter()
 
-        for chunk in chunks:
-            for i in range(len(chunk)):
-                for packed, encodings in ENCODINGS[:args.encoding_types]:
-                    for encoding in encodings:
-                        if (encoding.bits.lead > args.max_leading_char_bits) or (max(encoding.bits.successors) > args.max_successor_bits):
-                            continue
+        for packed, encodings in ENCODINGS[:args.encoding_types]:
+            for encoding in encodings:
+                if (encoding.bits.lead > args.max_leading_char_bits) or (max(encoding.bits.successors) > args.max_successor_bits):
+                    continue
+                for chunk in chunks:
+                    for i in range(len(chunk) - encoding.unpacked):
                         if encoding.can_encode(chunk[i:], successors, chrs_indices):
                             counters[packed][encoding] += encoding.unpacked
 
