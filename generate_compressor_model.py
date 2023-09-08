@@ -239,7 +239,7 @@ def chunkinator(files, split, strip):
     elif split == "newline":
         chunks = itertools.chain.from_iterable(data.splitlines() for data in all_in)
     elif split == "whitespace":
-        chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + "]", data) for data in all_in)
+        chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + b"]", data) for data in all_in)
 
     strip = strip.lower()
     for chunk in chunks:
@@ -302,8 +302,8 @@ def main():
         successors[char] = [successor for successor, freq in bigram_counters[char].most_common(1 << args.max_successor_bits)]
         successors[char] += ['\0'] * ((1 << args.max_successor_bits) - len(successors[char]))
 
-    max_chr = ord(max(successors.keys())) + 1
-    min_chr = ord(min(successors.keys()))
+    max_chr = max(successors.keys()) + 1
+    min_chr = min(successors.keys())
 
     chrs_indices = collections.OrderedDict(zip(successors.keys(), range(chars_count)))
     chrs_reversed = [chrs_indices.get(chr(i), -1) for i in range(256)]
@@ -383,7 +383,7 @@ def main():
     if args.output is None:
         print(out)
     else:
-        with open(args.output, "wb") as f:
+        with open(args.output, "w") as f:
             f.write(out)
             log("done.")
 
