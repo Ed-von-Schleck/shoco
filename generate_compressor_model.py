@@ -244,7 +244,7 @@ def chunkinator(files, split, strip):
     elif split == "newline":
         chunks = itertools.chain.from_iterable(data.splitlines() for data in all_in)
     elif split == "whitespace":
-        chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + "]", data) for data in all_in)
+        chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + b"]", data) for data in all_in)
 
     strip = strip.lower()
     for chunk in chunks:
@@ -254,7 +254,7 @@ def chunkinator(files, split, strip):
             chunk = chunk.strip(PUNCTUATION + WHITESPACE)
 
         if chunk:
-            yield chunk
+            yield chunk.decode('iso-8859-1')
 
 
 def nearest_lg(number):
@@ -389,7 +389,7 @@ def main():
         print(out)
     else:
         with open(args.output, "wb") as f:
-            f.write(out)
+            f.write(out.encode('utf-8'))
             log("done.")
 
 if __name__ == "__main__":
