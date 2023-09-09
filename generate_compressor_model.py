@@ -116,10 +116,15 @@ class Encoding(object):
         self.bits = Bits(bitlist)
         self.masks = Masks(bitlist)
         self.offsets = Offsets(bitlist)
-        self.packed = sum(bitlist) / 8
+        self.packed = sum(bitlist) // 8
         self.size = len([bits for bits in bitlist if bits])
         self.unpacked = self.size - 1
         self._hash = tuple(bitlist).__hash__()
+
+    def __str__(self):
+        return str(self.bits.datalist)
+    def __repr__(self):
+        return str(self.bits.datalist)
 
     @property
     def header_code(self):
@@ -140,19 +145,19 @@ class Encoding(object):
         lead_index = chrs_indices.get(part[0], -1)
         if lead_index < 0:
             return False
-        if lead_index > (1 << self.bits.header):
+        if lead_index > self.masks.lead:
             return False
         last_index = lead_index
         last_char = part[0]
-        for bits, char in zip(self.bits.consecutive, part[1:]):
-            if char not in successors[last_char]:
+        for masks, char in zip(self.masks.successors, part[1:]):
+            if last_char not in successors or char not in successors[last_char]:
                 return False
             successor_index = successors[last_char].index(char)
-            if successor_index > (1 << bits):
+            if successor_index > masks:
                 return False
             last_index = successor_index
-            last_char = part[0]
-            return True
+            last_char = char
+        return True
 
 PACK_STRUCTURES = (
     (1, (
@@ -239,7 +244,7 @@ def chunkinator(files, split, strip):
     elif split == "newline":
         chunks = itertools.chain.from_iterable(data.splitlines() for data in all_in)
     elif split == "whitespace":
-        chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + "]", data) for data in all_in)
+        chunks = itertools.chain.from_iterable(re.split(b"[" + WHITESPACE + b"]", data) for data in all_in)
 
     strip = strip.lower()
     for chunk in chunks:
@@ -249,7 +254,7 @@ def chunkinator(files, split, strip):
             chunk = chunk.strip(PUNCTUATION + WHITESPACE)
 
         if chunk:
-            yield chunk
+            yield chunk.decode('iso-8859-1')
 
 
 def nearest_lg(number):
@@ -327,14 +332,14 @@ def main():
         for packed, _ in ENCODINGS[:args.encoding_types]:
             counters[packed] = collections.Counter()
 
-        for chunk in chunks:
-            for i in range(len(chunk)):
-                for packed, encodings in ENCODINGS[:args.encoding_types]:
-                    for encoding in encodings:
-                        if (encoding.bits.lead > args.max_leading_char_bits) or (max(encoding.bits.consecutive) > args.max_successor_bits):
-                            continue
+        for packed, encodings in ENCODINGS[:args.encoding_types]:
+            for encoding in encodings:
+                if (encoding.bits.lead > args.max_leading_char_bits) or (max(encoding.bits.successors) > args.max_successor_bits):
+                    continue
+                for chunk in chunks:
+                    for i in range(len(chunk) - encoding.unpacked):
                         if encoding.can_encode(chunk[i:], successors, chrs_indices):
-                            counters[packed][encoding] += packed / float(encoding.unpacked)
+                            counters[packed][encoding] += encoding.unpacked
 
         best_encodings_raw = [(packed, counter.most_common(1)[0][0]) for packed, counter in counters.items()]
         max_encoding_len = max(encoding.size for _, encoding in best_encodings_raw)
@@ -384,7 +389,7 @@ def main():
         print(out)
     else:
         with open(args.output, "wb") as f:
-            f.write(out)
+            f.write(out.encode('utf-8'))
             log("done.")
 
 if __name__ == "__main__":
