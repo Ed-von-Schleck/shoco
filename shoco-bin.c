@@ -15,7 +15,7 @@ typedef enum {
 #define MAX_STACK_ALLOCATION_SIZE 65536
 
 int main(int argc, char **argv) {
-  Job job; 
+  Job job;
   unsigned long in_size;
   char *in_buffer;
   char *out_buffer;
@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
   char *infile = argv[2];
   char *outfile = argv[3];
 
-  fin = fopen (infile, "rb" );
+  fin = fopen(infile, "rb");
   if (fin == NULL) {
     fputs("Something went wrong opening the file. Does it even exist?", stderr);
     exit(1);
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
     len = shoco_decompress(in_buffer, in_size, out_buffer, in_size * 4);
 
   fout = fopen(outfile, "wb");
-  fwrite(out_buffer , sizeof(char), len, fout);
+  fwrite(out_buffer, sizeof(char), len, fout);
   fclose(fout);
 
   if (in_size > MAX_STACK_ALLOCATION_SIZE) {
