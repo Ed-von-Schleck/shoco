@@ -92,8 +92,8 @@ typedef struct Pack {
   unsigned int n_successors;
   unsigned const int offsets[8];
   const int masks[8];
-  char header_mask;
-  char header;
+  unsigned char header_mask;
+  unsigned char header;
 } Pack;
 
 #define PACK_COUNT 3

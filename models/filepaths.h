@@ -141,8 +141,8 @@ typedef struct Pack {
   const unsigned int bytes_unpacked;
   const unsigned int offsets[8];
   const int16_t _ALIGNED masks[8];
-  const char header_mask;
-  const char header;
+  const unsigned char header_mask;
+  const unsigned char header;
 } Pack;
 
 #define PACK_COUNT 3
