@@ -5,7 +5,7 @@
 #include "shoco.h"
 
 static const char USAGE[] = "compresses or decompresses your (presumably short) data.\n"
-"usage: shoco {c(ompress),d(ecompress)} <file-to-(de)compress> <output-filename>\n";
+"usage: shoco {c(ompress),d(ecompress)} <file-to-(de)compress> [output-filename]\n";
 
 typedef enum {
   JOB_COMPRESS,
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   FILE *fout;
   int len;
 
-  if (argc < 4) {
+  if (argc != 3 && argc != 4) {
     puts(USAGE);
     return 1;
   }
@@ -36,7 +36,10 @@ int main(int argc, char **argv) {
     return 1;
   }
   char *infile = argv[2];
-  char *outfile = argv[3];
+  char *outfile = 0;
+  if (argc == 4) {
+    outfile = argv[3];
+  }
 
   fin = fopen (infile, "rb" );
   if (fin == NULL) {
@@ -72,7 +75,11 @@ int main(int argc, char **argv) {
   else
     len = shoco_decompress(in_buffer, in_size, out_buffer, in_size * 4);
 
-  fout = fopen(outfile, "wb");
+  if (outfile) {
+    fout = fopen(outfile, "wb");
+  } else {
+    fout = stdout;
+  }
   fwrite(out_buffer , sizeof(char), len, fout);
   fclose(fout);
 
