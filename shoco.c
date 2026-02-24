@@ -185,7 +185,7 @@ size_t shoco_decompress(const char * const shoco_restrict original, size_t compl
       }
 
       *o++ = *in++;
-    } else {
+    } else if (mark < 3) {
       if (o + packs[mark].bytes_unpacked > out_end)
         return bufsize + 1;
       else if (in + packs[mark].bytes_packed > in_end)
@@ -212,6 +212,8 @@ size_t shoco_decompress(const char * const shoco_restrict original, size_t compl
 
       o += packs[mark].bytes_unpacked;
       in += packs[mark].bytes_packed;
+    } else {
+      break;
     }
   }
 

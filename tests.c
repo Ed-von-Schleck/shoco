@@ -104,6 +104,12 @@ int main() {
   ret = shoco_decompress("\xe0""ab", 3, buf_large, 4096);
   assert(ret == SIZE_MAX);
 
+  ret = shoco_decompress("\xf8", 1, buf_large, 4096);
+  assert(ret == 0);
+
+  ret = shoco_decompress("\xf8""ab", 3, buf_large, 4096);
+  assert(ret == 0);
+
   puts("All tests passed.");
   return 0;
 }
