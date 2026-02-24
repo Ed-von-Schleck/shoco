@@ -3,3 +3,4 @@ perf.*
 *.o
 *.s
 .*
+shoco
